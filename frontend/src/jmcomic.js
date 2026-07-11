@@ -53,23 +53,33 @@ export function decodeJsonData(data, ts) {
  * mode: 'api' (use Worker Proxy) | 'frontend' (direct fetch)
  */
 export async function fetchAlbumInfo(jmId, mode = 'api') {
-  const ts = Math.floor(Date.now() / 1000);
-  const { token, tokenparam } = getTokenWithTokenparam(ts);
-  
-  let rawData = null;
-  let lastError = null;
-
   if (mode === 'api') {
     // Via Cloudflare Worker proxy
-    const response = await fetch(`/api/jmcomic/${jmId}`);
+    const response = await fetch(`/api/jmcomic/${jmId}`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
     if (!response.ok) {
       throw new Error(`请求代理失败: ${response.status}`);
     }
-    const resJson = await response.json();
-    if (resJson.code !== 200) throw new Error(`获取数据失败, Code: ${resJson.code}`);
-    rawData = resJson.data;
+    const resText = await response.text();
+    let resJson;
+    try {
+      resJson = JSON.parse(resText);
+    } catch (e) {
+      throw new Error(`代理返回了非 JSON 内容 (可能是被拦截或 Token 无效): ${resText.substring(0, 50)}...`);
+    }
+    
+    if (resJson.code !== 200) throw new Error(`获取数据失败: ${resJson.message || resJson.code}`);
+    return resJson.data; // Note: Worker now returns decrypted plain JSON data directly
   } else {
     // Direct frontend fetch (Requires CORS extension)
+    const ts = Math.floor(Date.now() / 1000);
+    const { token, tokenparam } = getTokenWithTokenparam(ts);
+    
+    let rawData = null;
+    let lastError = null;
     let success = false;
     for (const domain of FALLBACK_API_SOURCES) {
       try {
@@ -96,12 +106,12 @@ export async function fetchAlbumInfo(jmId, mode = 'api') {
     if (!success) {
       throw new Error(lastError ? `直连请求失败(请检查跨域): ${lastError.message}` : '所有备用域名均请求失败');
     }
-  }
 
-  // Decrypt data
-  if (rawData) {
-    return decodeJsonData(rawData, ts);
-  } else {
-    throw new Error('未获取到有效数据');
+    // Decrypt data
+    if (rawData) {
+      return decodeJsonData(rawData, ts);
+    } else {
+      throw new Error('未获取到有效数据');
+    }
   }
 }

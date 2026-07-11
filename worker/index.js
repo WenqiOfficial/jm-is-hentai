@@ -1,9 +1,98 @@
-const FALLBACK_API_SOURCES = [
-  'www.cdnaspa.vip',
-  'www.cdnaspa.club',
-  'www.cdnplaystation6.cc',
-  'www.cdnplaystation6.vip',
+import CryptoJS from 'crypto-js';
+
+const APP_TOKEN_SECRET = "18comicAPP";
+const APP_DATA_SECRET = "185Hcomic3PAPP7R";
+const APP_VERSION = "1.8.0";
+const API_DOMAIN_SERVER_SECRET = "diosfjckwpqpdfjkvnqQjsik";
+
+const API_DOMAIN_SERVER_URLS = [
+  "https://rup4a04-c01.tos-ap-southeast-1.bytepluses.com/newsvr-2025.txt",
+  "https://rup4a04-c02.tos-cn-hongkong.bytepluses.com/newsvr-2025.txt",
+  "https://rup4a04-c03.tos-cn-beijing.bytepluses.com.cn/newsvr-2025.txt",
+  "https://jmappc01-1308024008.cos.ap-guangzhou.myqcloud.com/server-2024.txt"
 ];
+
+const FALLBACK_API_SOURCES = [
+  "www.cdnaspa.club",
+  "www.cdnaspa.vip",
+  "www.cdnplaystation6.cc",
+  "www.cdnplaystation6.vip"
+];
+
+const getTokenWithTokenparam = (ts, ver = APP_VERSION, secret = APP_TOKEN_SECRET) => {
+  const tokenparam = `${ts},${ver}`;
+  const token = CryptoJS.MD5(`${ts}${secret}`).toString();
+  return { token, tokenparam };
+};
+
+const decodeDataText = (data, ts, secret = APP_DATA_SECRET) => {
+  const dataWordArray = CryptoJS.enc.Base64.parse(data);
+  const token = CryptoJS.MD5(`${ts}${secret}`).toString();
+  const tokenWordArray = CryptoJS.enc.Utf8.parse(token);
+  const encrypted = CryptoJS.lib.CipherParams.create({
+    ciphertext: dataWordArray
+  });
+  const decrypted = CryptoJS.AES.decrypt(encrypted, tokenWordArray, {
+    mode: CryptoJS.mode.ECB,
+    padding: CryptoJS.pad.Pkcs7
+  });
+  return decrypted.toString(CryptoJS.enc.Utf8);
+};
+
+const decodeJsonData = (data, ts, secret) => {
+  return JSON.parse(decodeDataText(data, ts, secret));
+};
+
+const stripNonAsciiPrefix = (text) => {
+  let result = text;
+  while (result && result.charCodeAt(0) > 127) {
+    result = result.slice(1);
+  }
+  return result;
+};
+
+const normalizeApiSource = (source) => {
+  const trimmed = source.trim();
+  if (!trimmed) return "";
+  try {
+    return new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`).host;
+  } catch {
+    return trimmed.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  }
+};
+
+const normalizeApiSources = (sources) => {
+  return Array.from(new Set(sources.map(normalizeApiSource).filter(Boolean)));
+};
+
+let cachedApiSources = null;
+let lastSourceFetchTime = 0;
+
+const fetchLatestApiSources = async () => {
+  const now = Date.now();
+  if (cachedApiSources && now - lastSourceFetchTime < 3600000) { // cache for 1 hour
+    return cachedApiSources;
+  }
+
+  for (const url of API_DOMAIN_SERVER_URLS) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (!response.ok) continue;
+      const encryptedText = stripNonAsciiPrefix(await response.text());
+      const decodedText = decodeDataText(encryptedText, "", API_DOMAIN_SERVER_SECRET);
+      const data = JSON.parse(decodedText);
+      const sources = normalizeApiSources(data.Server ?? []);
+      if (sources.length > 0) {
+        cachedApiSources = sources;
+        lastSourceFetchTime = now;
+        return sources;
+      }
+    } catch (e) {
+      // ignore error and try next
+    }
+  }
+  return null;
+};
 
 export default {
   async fetch(request, env, ctx) {
@@ -17,6 +106,16 @@ export default {
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "*",
         },
+      });
+    }
+
+    if (url.pathname === '/api/jmcomic/sources') {
+      const sources = await fetchLatestApiSources() || FALLBACK_API_SOURCES;
+      return new Response(JSON.stringify({ sources }), {
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
       });
     }
 
@@ -38,27 +137,44 @@ export default {
         }
       }
 
-      const newHeaders = new Headers(request.headers);
+      const sources = await fetchLatestApiSources() || FALLBACK_API_SOURCES;
+      const timestamp = Math.floor(Date.now() / 1000);
+      const { token, tokenparam } = getTokenWithTokenparam(timestamp);
+
+      const newHeaders = new Headers();
       newHeaders.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
       newHeaders.set('Accept', 'application/json');
+      newHeaders.set('token', token);
+      newHeaders.set('tokenparam', tokenparam);
+      newHeaders.set('Accept-Encoding', 'gzip, deflate');
 
       let lastError = null;
       let rawData = null;
       let success = false;
 
-      // Try fallback domains
-      for (const domain of FALLBACK_API_SOURCES) {
+      for (const domain of sources) {
         const targetUrl = `https://${domain}/album?id=${jmId}`;
         try {
           const jmResponse = await fetch(targetUrl, {
             method: 'GET',
             headers: newHeaders,
+            signal: AbortSignal.timeout(10000)
           });
 
           if (jmResponse.ok) {
-            rawData = await jmResponse.text();
-            success = true;
-            break;
+            const respJson = await jmResponse.json();
+            try {
+              const album = decodeJsonData(respJson.data, timestamp);
+              if (album && album.id) {
+                // Add the successful domain to the payload for frontend to use as image CDN
+                album._source_domain = domain;
+                rawData = JSON.stringify({ code: 200, data: album });
+                success = true;
+                break;
+              }
+            } catch(e) {
+                lastError = e;
+            }
           }
         } catch (e) {
           lastError = e;
@@ -78,9 +194,15 @@ export default {
           }
         });
       } else {
-        return new Response(`Fetch Error: ${lastError ? lastError.message : 'All domains failed'}`, { 
+        return new Response(JSON.stringify({
+            code: 502,
+            message: `Fetch Error: ${lastError ? lastError.message : 'All domains failed'}`
+        }), { 
           status: 502, 
-          headers: { "Access-Control-Allow-Origin": "*" } 
+          headers: { 
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*" 
+          } 
         });
       }
     }

@@ -127,7 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
     visualContent.innerHTML = '';
     visualContent.classList.remove('placeholder');
 
-    const imgUrl = `https://cdn-msp.18comic.org/media/albums/${album.id}_3x4.jpg`;
+    const cdnDomain = album._source_domain || 'www.cdnaspa.vip';
+    const rawImgUrl = `https://${cdnDomain}/media/albums/${album.id}_3x4.jpg`;
+    const imgUrl = `https://img.wenqi.icu/?url=${encodeURIComponent(rawImgUrl)}`;
 
     const img = document.createElement('img');
     img.crossOrigin = 'Anonymous';
