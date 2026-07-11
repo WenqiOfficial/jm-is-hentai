@@ -142,9 +142,16 @@ document.addEventListener('DOMContentLoaded', () => {
           const color = colorThief.getColor(img);
           const palette = colorThief.getPalette(img, 3);
 
-          const c1 = color || [167, 199, 231];
-          const c2 = (palette && palette[0]) || [255, 183, 178];
-          const c3 = (palette && palette[1]) || [253, 253, 150];
+          // Helper to make extracted colors soft and pastel (mix with warm white)
+          const pastelify = (rgb) => [
+            Math.round(rgb[0] * 0.4 + 255 * 0.6),
+            Math.round(rgb[1] * 0.4 + 250 * 0.6),
+            Math.round(rgb[2] * 0.4 + 240 * 0.6)
+          ];
+
+          const c1 = color ? pastelify(color) : [160, 196, 255];
+          const c2 = (palette && palette[0]) ? pastelify(palette[0]) : [255, 198, 255];
+          const c3 = (palette && palette[1]) ? pastelify(palette[1]) : [253, 255, 182];
 
           // CSS @property transitions handle smooth interpolation for UI elements
           document.documentElement.style.setProperty(
@@ -271,36 +278,33 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ============================================
-  //  3D Tilt Micro-interactions
-  //  - Fast tracking on mousemove (0.08s)
-  //  - Slow elastic bounce on mouseleave (0.6s)
+  //  Smooth Hover Glare Effect (Hardware Accelerated)
   // ============================================
 
   const interactiveCards = document.querySelectorAll('.interactive-card');
   interactiveCards.forEach((card) => {
+    const glare = card.querySelector('.glare');
+    if (!glare) return;
+
     card.addEventListener('mousemove', (e) => {
       const rect = card.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
+      // Translate the glare. The glare is 200% width/height and centered at -50% -50%.
+      // We want its center to follow the mouse.
+      const translateX = x - rect.width / 2;
+      const translateY = y - rect.height / 2;
 
-      // Max ±8 degrees rotation
-      const rotateX = ((y - centerY) / centerY) * -8;
-      const rotateY = ((x - centerX) / centerX) * 8;
-
-      // Fast tracking transition for responsive feel
-      card.style.transition = 'transform 0.08s ease-out';
-      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+      // Use requestAnimationFrame for buttery smooth 60fps tracking without layout thrashing
+      requestAnimationFrame(() => {
+        glare.style.transform = `translate(${translateX}px, ${translateY}px)`;
+      });
     });
 
     card.addEventListener('mouseleave', () => {
-      // Slow elastic bounce back — simulates weightlessness (失重感)
-      card.style.transition =
-        'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      card.style.transform =
-        'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+      // Glare opacity fade out is handled purely by CSS :hover
+      // No need to reset position, it just fades out.
     });
   });
 });

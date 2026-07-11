@@ -16,26 +16,28 @@
   </div>
 
   <header class="header" role="banner">
-    <div class="logo"><i class="fa-solid fa-cloud"></i> 神秘数字转换器</div>
-    <div class="menu-toggle">
-      <button id="settings-btn" class="icon-btn"
-              title="设置"
-              aria-label="打开设置菜单"
-              aria-expanded="false"
-              aria-controls="settings-panel">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div id="settings-panel" class="settings-panel is-hidden"
-           role="menu"
-           aria-label="数据源设置">
-        <h4>数据源设置</h4>
-        <label class="toggle-label" role="menuitemradio">
-          <input type="radio" name="datasource" value="api" checked> 后端 API 代理 (推荐)
-        </label>
-        <label class="toggle-label" role="menuitemradio">
-          <input type="radio" name="datasource" value="frontend"> 前端直连 (省流/需跨域)
-        </label>
+    <div class="header-left">
+      <div class="menu-toggle">
+        <button id="settings-btn" class="icon-btn"
+                title="设置"
+                aria-label="打开设置菜单"
+                aria-expanded="false"
+                aria-controls="settings-panel">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div id="settings-panel" class="settings-panel is-hidden"
+             role="menu"
+             aria-label="数据源设置">
+          <h4>数据源设置</h4>
+          <label class="toggle-label" role="menuitemradio">
+            <input type="radio" name="datasource" value="api" checked> 后端 API 代理 (推荐)
+          </label>
+          <label class="toggle-label" role="menuitemradio">
+            <input type="radio" name="datasource" value="frontend"> 前端直连 (省流/需跨域)
+          </label>
+        </div>
       </div>
+      <div class="logo"><i class="fa-solid fa-cloud"></i> 神秘数字转换器</div>
     </div>
   </header>
 
@@ -48,10 +50,27 @@
     </div>
 
     <div class="operation-area">
-      <!-- Float wrapper isolates floating animation from child 3D tilt -->
       <div class="float-wrapper">
-        <div class="card cloud-card interactive-card">
-          <h1 class="card-title">输入神秘数字</h1>
+        <div class="cloud-decorations">
+          <svg class="deco-cloud dc-1" viewBox="0 0 24 24"><path fill="currentColor" d="M17.5 19c2.48 0 4.5-2.02 4.5-4.5c0-2.05-1.37-3.81-3.23-4.34C18.6 6.57 15.63 4 12 4c-3.1 0-5.76 1.95-6.72 4.69C2.3 9.07 0 11.77 0 15c0 3.31 2.69 6 6 6h11.5z"/></svg>
+          <svg class="deco-cloud dc-2" viewBox="0 0 24 24"><path fill="currentColor" d="M17.5 19c2.48 0 4.5-2.02 4.5-4.5c0-2.05-1.37-3.81-3.23-4.34C18.6 6.57 15.63 4 12 4c-3.1 0-5.76 1.95-6.72 4.69C2.3 9.07 0 11.77 0 15c0 3.31 2.69 6 6 6h11.5z"/></svg>
+          <svg class="deco-cloud dc-3" viewBox="0 0 24 24"><path fill="currentColor" d="M17.5 19c2.48 0 4.5-2.02 4.5-4.5c0-2.05-1.37-3.81-3.23-4.34C18.6 6.57 15.63 4 12 4c-3.1 0-5.76 1.95-6.72 4.69C2.3 9.07 0 11.77 0 15c0 3.31 2.69 6 6 6h11.5z"/></svg>
+        </div>
+        <div class="card glass-card interactive-card">
+          <div class="glare-container"><div class="glare"></div></div>
+          <h1 class="card-title">检索你的车牌号</h1>
+          
+          <div class="platform-toggle" role="radiogroup" aria-label="搜索平台">
+            <label class="platform-btn active">
+              <input type="radio" name="platform" value="jm" checked>
+              <i class="fa-solid fa-book-open"></i> 禁漫
+            </label>
+            <label class="platform-btn">
+              <input type="radio" name="platform" value="eh">
+              <i class="fa-solid fa-paw"></i> E-Hentai
+            </label>
+          </div>
+
           <div class="input-group">
             <input type="text" id="jm-id-input"
                    placeholder="输入 JMComic 编号..."

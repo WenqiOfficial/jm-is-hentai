@@ -76,8 +76,8 @@ void main() {
   float dm = length(uv - mouseUV);
   float wm = exp(-dm * dm * 8.0) * 0.2;
 
-  // Warm white base to prevent dark spots
-  vec3 baseColor = vec3(0.97, 0.98, 0.99);
+  // Warm white base to prevent dark spots and give a soft, creamy feel
+  vec3 baseColor = vec3(0.99, 0.98, 0.96);
   float baseWeight = 0.15;
 
   float total = w1 + w2 + w3 + wm + baseWeight + 0.001;
@@ -107,11 +107,11 @@ export class WebGLBackground {
     this.startTime = Date.now();
     this.isRunning = false;
 
-    // Colors in normalized [0,1] range
+    // Colors in normalized [0,1] range - Warm Macarons
     this.currentColors = {
-      color1: [0.655, 0.780, 0.906], // #A7C7E7 Baby Blue
-      color2: [1.000, 0.718, 0.698], // #FFB7B2 Pastel Pink
-      color3: [0.992, 0.992, 0.588], // #FDFD96 Pastel Yellow
+      color1: [0.627, 0.768, 1.0], // #A0C4FF Warm Baby Blue
+      color2: [1.0, 0.776, 1.0], // #FFC6FF Warm Pastel Pink
+      color3: [0.992, 1.0, 0.713], // #FDFFB6 Warm Pastel Yellow
     };
     this.targetColors = {
       color1: [...this.currentColors.color1],
@@ -305,10 +305,10 @@ export class WebGLBackground {
     this.targetColors.color3 = color3.map((c) => c / 255);
   }
 
-  /** Reset to default macaron palette */
+  /** Reset to default warm macaron palette */
   resetColors() {
-    this.targetColors.color1 = [0.655, 0.780, 0.906];
-    this.targetColors.color2 = [1.000, 0.718, 0.698];
-    this.targetColors.color3 = [0.992, 0.992, 0.588];
+    this.targetColors.color1 = [0.627, 0.768, 1.0];
+    this.targetColors.color2 = [1.0, 0.776, 1.0];
+    this.targetColors.color3 = [0.992, 1.0, 0.713];
   }
 }

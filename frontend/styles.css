@@ -20,14 +20,14 @@
 }
 
 :root {
-  --primary-color: #A7C7E7; /* Baby Blue */
-  --secondary-color: #FFB7B2; /* Pastel Pink */
-  --accent-color: #FDFD96; /* Pastel Yellow */
+  --primary-color: #A0C4FF; /* Warm Baby Blue */
+  --secondary-color: #FFC6FF; /* Warm Pastel Pink */
+  --accent-color: #FDFFB6; /* Warm Pastel Yellow */
   --bg-color: #F8FAFC;
   --text-dark: #1E293B;
   --text-light: #64748B;
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4));
+  --glass-border: rgba(255, 255, 255, 0.5);
 
   /* Smooth 1.5s transition for @property-registered colors */
   transition: --primary-color 1.5s ease,
@@ -125,6 +125,12 @@ body {
   align-items: center;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .logo {
   font-size: 24px;
   font-weight: bold;
@@ -167,7 +173,7 @@ body {
 .settings-panel {
   position: absolute;
   top: 55px;
-  right: 0;
+  left: 0; /* Anchor left instead of right to prevent off-screen overflow */
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -176,7 +182,7 @@ body {
   padding: 16px;
   width: 250px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transform-origin: top right;
+  transform-origin: top left;
 
   /* Smooth transition for show/hide */
   opacity: 1;
@@ -243,42 +249,30 @@ body {
 }
 
 /* Mobile: bottom edge fades into background */
-@media (max-width: 1023px) {
-  .visual-area {
-    mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-  }
-}
-
-/* Desktop: right edge fades for overlap with operation area */
+/* Desktop layout */
 @media (min-width: 1024px) {
   .visual-area {
-    flex: 0 0 60%;
-    height: 100vh;
-    mask-image: linear-gradient(to right, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    flex: 1;
+    padding-right: 5%;
+    justify-content: flex-end; /* Push to center alongside right block */
   }
 }
 
 .visual-content {
   width: 100%;
-  max-width: 400px;
-  aspect-ratio: 2/3;
-  /* Cloud-like organic shape */
-  border-radius: 40% 60% 60% 40% / 50% 50% 50% 50%;
+  max-width: 450px; /* Same max-width as the right block */
+  aspect-ratio: 3/4; /* Standard portrait aspect ratio */
+  border-radius: 24px;
   background: var(--glass-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  transition: border-radius 3s ease-in-out;
-}
-
-.visual-content:hover {
-  border-radius: 50% 50% 40% 60% / 60% 40% 60% 40%;
+  position: relative;
+  border: 1px solid var(--glass-border);
 }
 
 .visual-content.placeholder {
@@ -290,6 +284,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: top center; /* Better framing for character art */
   animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -304,56 +299,168 @@ body {
 
 @media (min-width: 1024px) {
   .operation-area {
-    flex: 0 0 40%;
-    align-items: center;
-    padding-right: 5%;
+    flex: 1;
+    justify-content: flex-start;
+    padding-left: 5%;
   }
 }
 
-/* Float wrapper — isolates floating animation from child 3D tilt */
+/* Float wrapper & Cloud Decorations */
 .float-wrapper {
-  animation: floating 6s ease-in-out infinite reverse;
+  position: relative;
   width: 100%;
   max-width: 450px;
+  animation: floating 6s ease-in-out infinite reverse;
+}
+
+.cloud-decorations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.deco-cloud {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.8);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.05));
+  animation: floating 8s ease-in-out infinite;
+}
+
+.dc-1 {
+  width: 120px;
+  top: -40px;
+  right: -50px;
+  animation-delay: 0s;
+}
+
+.dc-2 {
+  width: 180px;
+  bottom: -60px;
+  left: -70px;
+  animation-delay: -2s;
+}
+
+.dc-3 {
+  width: 80px;
+  top: 40%;
+  right: -40px;
+  animation-delay: -4s;
 }
 
 /* ===== Cards ===== */
 .card {
+  position: relative;
   background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 2px solid var(--glass-border);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
   padding: 40px;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
+  border-radius: 32px; /* Clean rounded card instead of egg */
+  overflow: hidden; /* Contain glare */
+  z-index: 1; /* Keep above cloud decorations */
 }
 
-/* Cloud Card — irregular organic border-radius, NO animation (parent handles it) */
-.cloud-card {
-  border-radius: 30px 50px 40px 60px / 50px 30px 60px 40px;
+/* Highly optimized hardware-accelerated glare */
+.glare-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 32px;
 }
 
-/* Interactive 3D Card — fast tracking, elastic bounce on leave (set via JS) */
+.glare {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.6) 0%,
+    transparent 25%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.card:hover .glare {
+  opacity: 1;
+}
+
+/* Interactive 3D Card */
 .interactive-card {
-  transition: transform 0.08s ease-out;
-  transform-style: preserve-3d;
+  transition: transform 0.1s ease-out;
   will-change: transform;
 }
 
 .card-title {
+  position: relative;
+  z-index: 1; /* Keep above glare */
   font-size: 24px;
   margin-bottom: 24px;
   text-align: center;
-  transform: translateZ(20px);
 }
 
 .input-group {
+  position: relative;
+  z-index: 1; /* Keep above glare */
   display: flex;
   flex-direction: column;
   gap: 16px;
   margin-bottom: 24px;
-  transform: translateZ(30px);
+}
+
+/* ===== Platform Toggle ===== */
+.platform-toggle {
+  position: relative;
+  z-index: 1; /* Keep above glare */
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.platform-btn {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 10px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.platform-btn input {
+  display: none;
+}
+
+.platform-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.platform-btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(160, 196, 255, 0.4);
 }
 
 /* ===== Input ===== */
@@ -448,6 +555,8 @@ body {
 
 /* ===== Result Area ===== */
 .result-container {
+  position: relative;
+  z-index: 1; /* Keep above glare */
   margin-top: 20px;
 }
 
