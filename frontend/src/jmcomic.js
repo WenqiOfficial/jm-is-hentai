@@ -4,6 +4,13 @@ const APP_TOKEN_SECRET = '18comicAPP';
 const APP_DATA_SECRET = '185Hcomic3PAPP7R';
 const APP_VERSION = '1.8.0';
 
+export const FALLBACK_API_SOURCES = [
+  'www.cdnaspa.vip',
+  'www.cdnaspa.club',
+  'www.cdnplaystation6.cc',
+  'www.cdnplaystation6.vip',
+];
+
 /**
  * Generate Token and Tokenparam for JMComic API
  */
@@ -42,31 +49,59 @@ export function decodeJsonData(data, ts) {
 }
 
 /**
- * Fetch Album Info directly via our Worker proxy
+ * Fetch Album Info
+ * mode: 'api' (use Worker Proxy) | 'frontend' (direct fetch)
  */
-export async function fetchAlbumInfo(jmId) {
+export async function fetchAlbumInfo(jmId, mode = 'api') {
   const ts = Math.floor(Date.now() / 1000);
   const { token, tokenparam } = getTokenWithTokenparam(ts);
   
-  // Note: we fetch through our proxy. The proxy forwards the request to the target domain.
-  // We can pass token headers to our proxy, and the proxy will forward them.
-  const response = await fetch(`/api/jmcomic/${jmId}`, {
-    headers: {
-      'token': token,
-      'tokenparam': tokenparam
-    }
-  });
+  let rawData = null;
+  let lastError = null;
 
-  if (!response.ok) {
-    throw new Error(`请求失败: ${response.status}`);
+  if (mode === 'api') {
+    // Via Cloudflare Worker proxy
+    const response = await fetch(`/api/jmcomic/${jmId}`);
+    if (!response.ok) {
+      throw new Error(`请求代理失败: ${response.status}`);
+    }
+    const resJson = await response.json();
+    if (resJson.code !== 200) throw new Error(`获取数据失败, Code: ${resJson.code}`);
+    rawData = resJson.data;
+  } else {
+    // Direct frontend fetch (Requires CORS extension)
+    let success = false;
+    for (const domain of FALLBACK_API_SOURCES) {
+      try {
+        const response = await fetch(`https://${domain}/album?id=${jmId}`, {
+          headers: {
+            'token': token,
+            'tokenparam': tokenparam,
+            'Accept': 'application/json'
+          }
+        });
+        if (response.ok) {
+          const resJson = await response.json();
+          if (resJson.code === 200 && resJson.data) {
+            rawData = resJson.data;
+            success = true;
+            break;
+          }
+        }
+      } catch (err) {
+        lastError = err;
+        continue;
+      }
+    }
+    if (!success) {
+      throw new Error(lastError ? `直连请求失败(请检查跨域): ${lastError.message}` : '所有备用域名均请求失败');
+    }
   }
 
-  const resJson = await response.json();
-  
   // Decrypt data
-  if (resJson.code === 200 && resJson.data) {
-    return decodeJsonData(resJson.data, ts);
+  if (rawData) {
+    return decodeJsonData(rawData, ts);
   } else {
-    throw new Error(`获取数据失败, Code: ${resJson.code}`);
+    throw new Error('未获取到有效数据');
   }
 }

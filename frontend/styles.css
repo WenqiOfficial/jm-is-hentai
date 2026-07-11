@@ -1,3 +1,24 @@
+/* ============================================
+   神秘数字转换器 — Complete Style System
+   ============================================ */
+
+/* === Register CSS Custom Properties for smooth transitions === */
+@property --primary-color {
+  syntax: '<color>';
+  initial-value: #A7C7E7;
+  inherits: true;
+}
+@property --secondary-color {
+  syntax: '<color>';
+  initial-value: #FFB7B2;
+  inherits: true;
+}
+@property --accent-color {
+  syntax: '<color>';
+  initial-value: #FDFD96;
+  inherits: true;
+}
+
 :root {
   --primary-color: #A7C7E7; /* Baby Blue */
   --secondary-color: #FFB7B2; /* Pastel Pink */
@@ -7,6 +28,11 @@
   --text-light: #64748B;
   --glass-bg: rgba(255, 255, 255, 0.6);
   --glass-border: rgba(255, 255, 255, 0.4);
+
+  /* Smooth 1.5s transition for @property-registered colors */
+  transition: --primary-color 1.5s ease,
+              --secondary-color 1.5s ease,
+              --accent-color 1.5s ease;
 }
 
 * {
@@ -21,10 +47,10 @@ body {
   background-color: var(--bg-color);
   min-height: 100vh;
   overflow-x: hidden;
-  perspective: 1000px; /* For 3D mouse interactions */
+  perspective: 1000px;
 }
 
-/* Background Animation */
+/* ===== Background ===== */
 .background-container {
   position: fixed;
   top: 0;
@@ -33,9 +59,19 @@ body {
   height: 100vh;
   z-index: -1;
   overflow: hidden;
-  transition: background-color 1s ease;
 }
 
+/* WebGL Canvas (injected by JS) */
+.webgl-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* CSS Fallback Gradient (visible when WebGL unavailable) */
 .fluid-gradient {
   width: 200vw;
   height: 200vh;
@@ -48,15 +84,15 @@ body {
   filter: blur(80px);
   animation: moveFluid 20s infinite alternate linear;
   opacity: 0.7;
-  transition: background 1s ease;
 }
 
 @keyframes moveFluid {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(-10%, 10%) rotate(5deg); }
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  50%  { transform: translate(-10%, 10%) rotate(5deg); }
   100% { transform: translate(10%, -10%) rotate(-5deg); }
 }
 
+/* Reduced Motion: static gradient, no animation */
 @media (prefers-reduced-motion: reduce) {
   .fluid-gradient {
     animation: none;
@@ -64,9 +100,19 @@ body {
     filter: none;
     opacity: 0.3;
   }
+  .webgl-canvas {
+    display: none !important;
+  }
+  .float-wrapper,
+  .logo {
+    animation: none !important;
+  }
+  .interactive-card {
+    transition: none !important;
+  }
 }
 
-/* Header */
+/* ===== Header ===== */
 .header {
   padding: 20px;
   position: fixed;
@@ -83,11 +129,11 @@ body {
   font-size: 24px;
   font-weight: bold;
   color: var(--text-dark);
-  text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
   animation: floating 4s ease-in-out infinite;
 }
 
-/* Menu Toggle */
+/* ===== Menu Toggle ===== */
 .menu-toggle {
   position: relative;
 }
@@ -102,7 +148,8 @@ body {
   color: var(--text-dark);
   cursor: pointer;
   backdrop-filter: blur(10px);
-  transition: all 0.3s;
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .icon-btn:hover {
@@ -111,6 +158,12 @@ body {
   transform: scale(1.1);
 }
 
+.icon-btn:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+/* Settings Panel — uses opacity/visibility (NOT display:none) */
 .settings-panel {
   position: absolute;
   top: 55px;
@@ -122,14 +175,23 @@ body {
   border-radius: 20px;
   padding: 16px;
   width: 250px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transform-origin: top right;
-  transition: opacity 0.3s, transform 0.3s;
+
+  /* Smooth transition for show/hide */
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  transition: opacity 0.35s ease,
+              transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              visibility 0.35s;
 }
 
-.settings-panel.hidden {
+.settings-panel.is-hidden {
   opacity: 0;
-  transform: scale(0.9);
+  visibility: hidden;
+  transform: scale(0.92) translateY(-8px);
   pointer-events: none;
 }
 
@@ -144,14 +206,21 @@ body {
   font-size: 14px;
   margin-bottom: 8px;
   cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
 }
 
-/* Layout */
+.toggle-label:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* ===== Layout ===== */
 .container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 80px 20px 20px;
+  padding: 80px 20px 60px;
 }
 
 @media (min-width: 1024px) {
@@ -163,7 +232,7 @@ body {
   }
 }
 
-/* Visual Area (Left / Top) */
+/* ===== Visual Area (Left / Top) ===== */
 .visual-area {
   flex: 1;
   display: flex;
@@ -173,6 +242,15 @@ body {
   z-index: 2;
 }
 
+/* Mobile: bottom edge fades into background */
+@media (max-width: 1023px) {
+  .visual-area {
+    mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  }
+}
+
+/* Desktop: right edge fades for overlap with operation area */
 @media (min-width: 1024px) {
   .visual-area {
     flex: 0 0 60%;
@@ -186,7 +264,7 @@ body {
   width: 100%;
   max-width: 400px;
   aspect-ratio: 2/3;
-  /* Soft cloud-like shape */
+  /* Cloud-like organic shape */
   border-radius: 40% 60% 60% 40% / 50% 50% 50% 50%;
   background: var(--glass-bg);
   backdrop-filter: blur(10px);
@@ -194,24 +272,28 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   transition: border-radius 3s ease-in-out;
 }
 
-/* Make it morph slowly */
 .visual-content:hover {
   border-radius: 50% 50% 40% 60% / 60% 40% 60% 40%;
+}
+
+.visual-content.placeholder {
+  font-size: 16px;
+  color: var(--text-light);
 }
 
 .visual-content img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Operation Area (Right / Bottom) */
+/* ===== Operation Area (Right / Bottom) ===== */
 .operation-area {
   flex: 1;
   display: flex;
@@ -228,7 +310,14 @@ body {
   }
 }
 
-/* Cards & Elements */
+/* Float wrapper — isolates floating animation from child 3D tilt */
+.float-wrapper {
+  animation: floating 6s ease-in-out infinite reverse;
+  width: 100%;
+  max-width: 450px;
+}
+
+/* ===== Cards ===== */
 .card {
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
@@ -237,26 +326,26 @@ body {
   padding: 40px;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.08);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
 }
 
-/* Cloud Card Shape */
+/* Cloud Card — irregular organic border-radius, NO animation (parent handles it) */
 .cloud-card {
   border-radius: 30px 50px 40px 60px / 50px 30px 60px 40px;
-  animation: floating 6s ease-in-out infinite reverse;
 }
 
-/* Interactive 3D Card */
+/* Interactive 3D Card — fast tracking, elastic bounce on leave (set via JS) */
 .interactive-card {
-  transition: transform 0.1s ease-out;
+  transition: transform 0.08s ease-out;
   transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .card-title {
   font-size: 24px;
   margin-bottom: 24px;
   text-align: center;
-  transform: translateZ(20px); /* Pop out in 3D */
+  transform: translateZ(20px);
 }
 
 .input-group {
@@ -267,14 +356,15 @@ body {
   transform: translateZ(30px);
 }
 
+/* ===== Input ===== */
 .rounded-input {
   width: 100%;
   padding: 16px 24px;
   font-size: 16px;
-  border: 2px solid rgba(255,255,255,0.8);
-  /* Cloud shape */
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  /* Cloud-shape organic border */
   border-radius: 30px 20px 40px 25px / 20px 30px 25px 40px;
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
   color: var(--text-dark);
   outline: none;
   transition: all 0.3s ease;
@@ -282,28 +372,36 @@ body {
 }
 
 .rounded-input:focus {
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
   border-color: var(--primary-color);
   box-shadow: 0 0 0 4px rgba(167, 199, 231, 0.3);
 }
 
+.rounded-input:focus-visible {
+  outline: none;
+}
+
+/* ===== Jelly Button — Q弹果冻效果 ===== */
 .jelly-btn {
   width: 100%;
   padding: 16px 32px;
   font-size: 18px;
   font-weight: bold;
   border: none;
-  /* Cloud shape */
   border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
   background: var(--primary-color);
   color: white;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
   font-family: inherit;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  position: relative;
+  overflow: hidden;
+  /* Elastic hover + smooth background */
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.3s ease;
 }
 
 .jelly-btn:hover {
@@ -312,25 +410,49 @@ body {
 }
 
 .jelly-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
+  transition-duration: 0.1s;
+}
+
+/* Bounce animation class (added/removed by JS on click) */
+.jelly-btn.bounce {
+  animation: jellyBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .jelly-btn.alt {
   background: var(--secondary-color);
 }
+
 .jelly-btn.alt:hover {
   background: #E8A29E;
 }
 
-/* Utils */
-.hidden {
-  display: none !important;
+.jelly-btn:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
 }
 
+/* ===== Fade Transition System ===== */
+/* Replaces display:none hard-switching with smooth opacity transitions */
+.fade-element {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease,
+              transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fade-element.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== Result Area ===== */
 .result-container {
   margin-top: 20px;
-  animation: slideUpFade 0.4s ease-out;
-  transform: translateZ(20px);
+}
+
+.result-stack {
+  position: relative;
 }
 
 .error-msg {
@@ -342,6 +464,7 @@ body {
   font-size: 14px;
 }
 
+/* ===== Loading (breathing pulse) ===== */
 .loading {
   display: flex;
   flex-direction: column;
@@ -356,10 +479,12 @@ body {
   border: 4px solid var(--glass-border);
   border-top-color: var(--primary-color);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  /* Spin + breathing opacity pulse */
+  animation: spin 1s linear infinite,
+             breathe 2s ease-in-out infinite;
 }
 
-/* Comic Info */
+/* ===== Comic Info ===== */
 .comic-info {
   display: flex;
   flex-direction: column;
@@ -384,25 +509,105 @@ body {
 }
 
 .tag {
-  background: rgba(255,255,255,0.7);
+  background: rgba(255, 255, 255, 0.7);
   padding: 4px 12px;
   border-radius: 16px;
   font-size: 12px;
   color: var(--text-dark);
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
-/* Animations */
+.tag:hover {
+  transform: scale(1.08);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.actions {
+  margin-top: 4px;
+}
+
+/* ===== Footer ===== */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+  color: var(--text-light);
+  z-index: 5;
+}
+
+.footer a {
+  color: var(--text-dark);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--text-light);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.footer a:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* ===== Keyframe Animations ===== */
+
+/* Soft weightless floating */
 @keyframes floating {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(1deg); }
+  0%   { transform: translateY(0px) rotate(0deg); }
+  50%  { transform: translateY(-10px) rotate(1deg); }
   100% { transform: translateY(0px) rotate(0deg); }
 }
 
+/* Cover image entrance: fade + slide + scale */
 @keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
+/* Spinner rotation */
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Spinner breathing pulse (opacity only, no transform conflict) */
+@keyframes breathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+/* Jelly bounce: multi-oscillation squash & stretch */
+@keyframes jellyBounce {
+  0%   { transform: scale(1, 1); }
+  20%  { transform: scale(1.15, 0.88); }
+  40%  { transform: scale(0.92, 1.08); }
+  60%  { transform: scale(1.06, 0.95); }
+  80%  { transform: scale(0.97, 1.03); }
+  100% { transform: scale(1, 1); }
+}
+
+/* Tag stagger entrance */
+@keyframes tagPop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Background fluid drift */
+@keyframes moveFluid {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  50%  { transform: translate(-10%, 10%) rotate(5deg); }
+  100% { transform: translate(10%, -10%) rotate(-5deg); }
 }
