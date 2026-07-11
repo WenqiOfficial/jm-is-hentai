@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>神秘数字转换器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="background-container">
+    <div class="fluid-gradient" id="fluid-gradient"></div>
+  </div>
+
+  <header class="header">
+    <div class="logo"><i class="fa-solid fa-cloud"></i> 神秘数字转换器</div>
+    <div class="menu-toggle">
+      <button id="settings-btn" class="icon-btn" title="设置"><i class="fa-solid fa-bars"></i></button>
+      <div id="settings-panel" class="settings-panel hidden">
+        <h4>数据源设置</h4>
+        <label class="toggle-label">
+          <input type="radio" name="datasource" value="api" checked> 后端 API 代理 (推荐)
+        </label>
+        <label class="toggle-label">
+          <input type="radio" name="datasource" value="frontend"> 前端直连 (省流/需跨域)
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="visual-area">
+      <div id="visual-content" class="visual-content placeholder interactive-card">
+        <!-- 看板娘或封面占位 -->
+        <span><i class="fa-solid fa-image"></i> 等待检索...</span>
+      </div>
+    </div>
+    
+    <div class="operation-area">
+      <div class="card cloud-card interactive-card">
+        <h1 class="card-title">检索你的车牌号</h1>
+        <div class="input-group">
+          <input type="text" id="jm-id-input" placeholder="输入 JMComic 编号..." class="rounded-input" />
+          <button id="search-btn" class="jelly-btn"><i class="fa-solid fa-magnifying-glass"></i> 检索</button>
+        </div>
+        
+        <div id="result-container" class="result-container hidden">
+          <div class="loading hidden" id="loading-indicator">
+            <div class="spinner"></div>
+            <p>正在云端寻找...</p>
+          </div>
+          
+          <div class="error-msg hidden" id="error-msg"></div>
+
+          <div class="comic-info hidden" id="comic-info">
+            <h2 id="comic-title" class="comic-title"></h2>
+            <div class="comic-meta">
+              <span id="comic-author"></span>
+              <div id="comic-tags" class="tag-cloud"></div>
+            </div>
+            <div class="actions">
+              <a href="#" id="jm-link" target="_blank" class="jelly-btn alt"><i class="fa-solid fa-book-open"></i> 前往 JMComic</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
