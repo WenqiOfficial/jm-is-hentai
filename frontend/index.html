@@ -13,7 +13,10 @@
   <link rel="stylesheet" href="./src/footer.css">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body>
+<body class="mask-active initial-load">
+  <!-- 全局加载遮罩 (Global Loading Mask) -->
+  <div class="global-mask" id="global-mask"></div>
+
   <div class="background-container" id="bg-container">
     <!-- CSS fallback gradient (hidden automatically when WebGL initializes) -->
     <div class="fluid-gradient" id="fluid-gradient"></div>
@@ -96,7 +99,16 @@
       </div>
       <div class="logo" id="main-logo">
         <img src="./image/icon-jmeh.png" alt="logo" class="logo-img" draggable="false">
-        <span id="logo-text-container" class="logo-text-gradient"></span>
+        <span id="logo-text-container" class="logo-text-gradient">
+          <span class="logo-letter">H</span>
+          <span class="logo-letter">e</span>
+          <span class="logo-letter">n</span>
+          <span class="logo-letter">t</span>
+          <span class="logo-letter">a</span>
+          <span class="logo-letter">i</span>
+          <span class="logo-letter">车</span>
+          <span class="logo-letter">站</span>
+        </span>
       </div>
     </div>
   </header>

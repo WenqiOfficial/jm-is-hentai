@@ -2,6 +2,27 @@
    Hentai车站 — Complete Style System
    ============================================ */
 
+/* === Font Definitions === */
+@font-face {
+  font-family: 'KeinannMaruPOP';
+  src: url('./font/KeinannMaruPOP.woff2') format('woff2'),
+       url('./font/KeinannMaruPOP.woff') format('woff'),
+       url('./font/KeinannMaruPOP.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KeinannMaruPOP-JP';
+  src: url('./font/KeinannMaruPOPjp.woff2') format('woff2'),
+       url('./font/KeinannMaruPOPjp.woff') format('woff'),
+       url('./font/KeinannMaruPOPjp.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* === Register CSS Custom Properties for smooth transitions === */
 @property --primary-color {
   syntax: '<color>';
@@ -67,6 +88,29 @@
 }
 */
 
+.global-mask {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(24px) brightness(0.85);
+  backdrop-filter: blur(24px) brightness(0.85);
+  z-index: 9990;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s;
+}
+
+body.mask-active .global-mask {
+  opacity: 1;
+  visibility: visible;
+}
+
+[data-theme="dark"] .global-mask {
+  background: rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(24px) brightness(0.5);
+  backdrop-filter: blur(24px) brightness(0.5);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -74,13 +118,20 @@
 }
 
 body {
-  font-family: 'Fredoka', 'KeinannMaruPOP', 'KingnamMaruPop', '荆南圆体', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Fredoka', 'KeinannMaruPOP', '荆南圆体', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   letter-spacing: 0.03em;
   color: var(--text-dark);
   background-color: var(--bg-color);
   min-height: 100vh;
   overflow-x: hidden;
   user-select: none; /* Prevent accidental text selection during drag */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Japanese typography prioritization */
+body:lang(ja) {
+  font-family: 'Fredoka', 'KeinannMaruPOP-JP', 'KeinannMaruPOP', '荆南圆体', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* ===== Background ===== */
@@ -161,10 +212,32 @@ body {
   align-items: center;
 }
 
+body.mask-active .header {
+  z-index: 9999;
+}
+
+body.mask-active.initial-load .logo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  pointer-events: none;
+}
+
 .header-left {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.menu-toggle {
+  transition: opacity 0.3s ease;
+}
+
+body.mask-active .menu-toggle {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .logo {
@@ -818,6 +891,8 @@ body {
   font-size: 14px;
 }
 
+
+
 /* ===== Loading (breathing pulse) ===== */
 .loading {
   display: flex;
@@ -1030,6 +1105,7 @@ body {
   bottom: 0;
   left: 0;
   width: 100%;
+  z-index: 9999;
   text-align: center;
   padding: 16px;
   font-size: 14px;

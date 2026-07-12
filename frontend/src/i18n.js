@@ -32,7 +32,19 @@ export function initI18n() {
     
     radio.addEventListener('change', (e) => {
       const val = e.target.value;
-      setLanguage(val);
+      
+      // Determine if a real change will happen
+      const isRealChange = (val === 'auto' && !isAuto) || (val !== 'auto' && val !== currentLang);
+      
+      if (isRealChange) {
+        window.dispatchEvent(new Event('showLoading'));
+        setTimeout(() => {
+          setLanguage(val);
+          window.dispatchEvent(new Event('hideLoading'));
+        }, 600);
+      } else {
+        setLanguage(val);
+      }
     });
   });
 

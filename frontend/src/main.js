@@ -3,10 +3,33 @@ import { WebGLBackground } from './webgl-background.js';
 import { getTransferTargets, searchEhentai, fetchEhentaiGallery } from './transfer.js';
 import { initI18n, t, getCurrentLang } from './i18n.js';
 import { translateTag, checkAndUpdateTags } from './tag-translator.js';
-import { initLogoInteractivity } from './logo.js';
+import { initLogoInteractivity, setLogoCentered } from './logo.js';
 import no18Icon from '../image/no18.png';
 
-document.addEventListener('DOMContentLoaded', () => {
+// --- Global Loading Mask Manager ---
+window.addEventListener('showLoading', () => {
+  document.body.classList.add('mask-active');
+  setLogoCentered(true);
+});
+
+window.addEventListener('hideLoading', () => {
+  document.body.classList.remove('mask-active');
+  setLogoCentered(false);
+});
+
+function hideInitialLoading() {
+  setTimeout(() => {
+    window.dispatchEvent(new Event('hideLoading'));
+  }, 400);
+}
+
+if (document.readyState === 'complete') {
+  hideInitialLoading();
+} else {
+  window.addEventListener('load', hideInitialLoading);
+}
+
+function initApp() {
   initI18n();
   // === DOM References ===
   const input = document.getElementById('jm-id-input');
@@ -855,4 +878,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize interactive logo
   initLogoInteractivity();
-});
+  
+  // Sync logo state with HTML initial mask-active class
+  if (document.body.classList.contains('mask-active')) {
+    setLogoCentered(true);
+  }
+  
+  setupTransferTabs();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}

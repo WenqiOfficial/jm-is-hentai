@@ -1,5 +1,11 @@
 import { t } from './i18n.js';
 
+let centeringCallback = null;
+
+export function setLogoCentered(isCentered) {
+  if (centeringCallback) centeringCallback(isCentered);
+}
+
 export function initLogoInteractivity() {
   const container = document.getElementById('logo-text-container');
   const mainLogo = document.getElementById('main-logo');
@@ -18,6 +24,32 @@ export function initLogoInteractivity() {
   const FLOAT_AMP = 1.2;
   const FLOAT_SPEED = 0.0015;
   let time = 0;
+
+  let isCentering = false;
+  let centerTargetX = 0;
+  let centerTargetY = 0;
+
+  // Handle SSR Hydration
+  const wasInitialLoad = document.body.classList.contains('initial-load');
+  if (wasInitialLoad) {
+    document.body.classList.remove('initial-load');
+  }
+
+  centeringCallback = (centered) => {
+    isCentering = centered;
+    if (centered) {
+      const rect = mainLogo.getBoundingClientRect();
+      const logoCenterX = rect.left + rect.width / 2;
+      const logoCenterY = rect.top + rect.height / 2;
+      const screenCenterX = window.innerWidth / 2;
+      const screenCenterY = window.innerHeight / 2;
+      
+      centerTargetX = screenCenterX - logoCenterX;
+      centerTargetY = screenCenterY - logoCenterY;
+      
+      dragAnchorIndex = -1;
+    }
+  };
 
   const updateText = () => {
     const text = t('app.title');
@@ -42,6 +74,14 @@ export function initLogoInteractivity() {
       entities.forEach(ent => {
         if (ent.isText) ent.baseBgX = -ent.el.offsetLeft;
       });
+      
+      // HYDRATION: If we are centering (initial load or language switch), forcefully set new entities to the center so they can fly back smoothly!
+      if (isCentering) {
+        entities.forEach(ent => {
+          ent.x = centerTargetX;
+          ent.y = centerTargetY;
+        });
+      }
     });
   };
 
@@ -86,7 +126,10 @@ export function initLogoInteractivity() {
       const c = entities[i];
       let tx = 0, ty = 0;
       
-      if (dragAnchorIndex === -1) {
+      if (isCentering) {
+        tx = centerTargetX;
+        ty = centerTargetY;
+      } else if (dragAnchorIndex === -1) {
         // Floating at rest
         tx = Math.sin(time * FLOAT_SPEED + c.rx) * FLOAT_AMP;
         ty = Math.cos(time * FLOAT_SPEED + c.ry) * FLOAT_AMP;
