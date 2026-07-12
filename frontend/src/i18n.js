@@ -37,6 +37,9 @@ export function initI18n() {
   });
 
   applyTranslations();
+  
+  // Always load tag translations regardless of language
+  loadTagTranslations();
 }
 
 /**
@@ -56,10 +59,8 @@ export function setLanguage(lang) {
   
   applyTranslations();
 
-  // If Chinese is selected (auto or manual), trigger tag DB download
-  if (currentLang === 'zh') {
-    loadTagTranslations();
-  }
+  // Trigger tag DB download (needed for all languages due to bidirectional mapping)
+  loadTagTranslations();
 
   // Dispatch event so other components can re-render if needed
   window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: currentLang } }));

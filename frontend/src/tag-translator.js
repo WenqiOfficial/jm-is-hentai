@@ -73,27 +73,34 @@ async function fetchAndCacheDB(isBackground = false, targetVersion = null) {
     
     const json = await response.json();
     
-    // Flatten the database
-    const flatDict = {};
+    // Flatten the database bidirectionally
+    const en2zh = {};
+    const zh2en = {};
     if (json && json.data) {
       for (const nsObj of json.data) {
         const namespace = nsObj.namespace;
         for (const [tagKey, tagVal] of Object.entries(nsObj.data)) {
-          // Format: 'namespace:tagname' (e.g. 'artist:mizuryu kei')
-          flatDict[`${namespace}:${tagKey}`] = tagVal.name;
-          if (!flatDict[tagKey]) {
-            flatDict[tagKey] = tagVal.name;
+          // English -> Chinese
+          en2zh[`${namespace}:${tagKey}`] = tagVal.name;
+          if (!en2zh[tagKey]) {
+            en2zh[tagKey] = tagVal.name;
+          }
+          // Chinese -> English (Reverse mapping)
+          if (!zh2en[tagVal.name]) {
+            zh2en[tagVal.name] = tagKey;
           }
         }
       }
     }
 
+    const combinedCache = { en2zh, zh2en };
+
     // Save to IndexedDB
-    await setDBItem('flattened_tags', flatDict);
+    await setDBItem('flattened_tags_v2', combinedCache);
     await setDBItem('last_update', Date.now());
     await setDBItem('version', targetVersion || json.version || Date.now());
     
-    tagCache = flatDict;
+    tagCache = combinedCache;
     if (!isBackground) {
       showToast(t('toast.update_success'), 'success');
     }
@@ -117,8 +124,8 @@ export async function loadTagTranslations() {
   
   // Check if we have it in IndexedDB
   try {
-    const cachedData = await getDBItem('flattened_tags');
-    if (cachedData) {
+    const cachedData = await getDBItem('flattened_tags_v2');
+    if (cachedData && cachedData.en2zh && cachedData.zh2en) {
       tagCache = cachedData;
       
       // Check for updates in background (older than 3 days)
@@ -185,22 +192,36 @@ export async function checkAndUpdateTags(manual = false) {
  * @param {string} lang - The current language ('zh', 'en', 'ja')
  */
 export function translateTag(tag, lang) {
+  if (!tag) return tag;
   const query = tag.toLowerCase().trim();
   const bareTag = query.includes(':') ? query.split(':').slice(1).join(':').trim() : query;
 
-  if (lang !== 'zh' || !tagCache) {
-    return bareTag; // Return original English/Romaji stripped of namespace
+  if (!tagCache) {
+    return bareTag;
   }
   
-  // Direct match
-  if (tagCache[query]) {
-    return tagCache[query];
+  if (lang === 'zh') {
+    // English -> Chinese
+    const dict = tagCache.en2zh;
+    if (dict) {
+      if (dict[query]) return dict[query];
+      if (dict[bareTag]) return dict[bareTag];
+    }
+    // If it's already Chinese (exists in zh2en keys), keep it
+    if (tagCache.zh2en && tagCache.zh2en[tag.trim()]) {
+      return tag.trim();
+    }
+    return bareTag;
+  } else {
+    // Chinese -> English (or Japanese fallback to English)
+    const dict = tagCache.zh2en;
+    if (dict) {
+      if (dict[tag.trim()]) return dict[tag.trim()];
+    }
+    // If it's already English (exists in en2zh keys), return stripped
+    if (tagCache.en2zh && tagCache.en2zh[bareTag]) {
+      return bareTag;
+    }
+    return bareTag;
   }
-
-  // If the query contains a namespace but the exact match failed, try stripping namespace
-  if (tagCache[bareTag]) {
-    return tagCache[bareTag];
-  }
-
-  return bareTag;
 }
