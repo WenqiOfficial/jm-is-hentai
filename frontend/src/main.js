@@ -936,8 +936,6 @@ function initApp() {
   if (document.body.classList.contains('mask-active')) {
     setLogoCentered(true);
   }
-  
-  setupTransferTabs();
 }
 
 if (document.readyState === 'loading') {
