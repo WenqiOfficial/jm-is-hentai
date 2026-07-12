@@ -41,44 +41,55 @@
              aria-label="数据源设置">
           <div class="settings-section">
             <h4 data-i18n="settings.datasource"><i class="fa-solid fa-server"></i> 数据源设置</h4>
-            <label class="toggle-label" role="menuitemradio">
-              <input type="radio" name="datasource" value="api" checked> <span data-i18n="settings.ds_api">后端 API 代理 (推荐)</span>
-            </label>
-            <label class="toggle-label" role="menuitemradio">
-              <input type="radio" name="datasource" value="frontend"> <span data-i18n="settings.ds_frontend">前端直连 (省流/需跨域)</span>
-            </label>
+            <div class="glass-pill-group">
+              <label class="glass-pill">
+                <input type="radio" name="datasource" value="api" checked>
+                <span data-i18n="settings.ds_api">API 代理</span>
+              </label>
+              <label class="glass-pill">
+                <input type="radio" name="datasource" value="frontend">
+                <span data-i18n="settings.ds_frontend">前端直连</span>
+              </label>
+            </div>
           </div>
           
           <hr class="settings-divider">
 
           <div class="settings-section">
             <h4 data-i18n="settings.language"><i class="fa-solid fa-earth-asia"></i> 语言设置</h4>
-            <label class="toggle-label" role="menuitemradio">
-              <input type="radio" name="language" value="auto" checked> <span data-i18n="settings.lang_auto">自动探测 (Auto)</span>
-            </label>
-            <label class="toggle-label" role="menuitemradio">
-              <input type="radio" name="language" value="zh"> 简体中文
-            </label>
-            <label class="toggle-label" role="menuitemradio">
-              <input type="radio" name="language" value="ja"> 日本語
-            </label>
-            <label class="toggle-label" role="menuitemradio">
-              <input type="radio" name="language" value="en"> English
-            </label>
+            <div class="glass-pill-group">
+              <label class="glass-pill">
+                <input type="radio" name="language" value="auto" checked>
+                <span data-i18n="settings.lang_auto">自动</span>
+              </label>
+              <label class="glass-pill">
+                <input type="radio" name="language" value="zh">
+                <span>中文</span>
+              </label>
+              <label class="glass-pill">
+                <input type="radio" name="language" value="ja">
+                <span>日本語</span>
+              </label>
+              <label class="glass-pill">
+                <input type="radio" name="language" value="en">
+                <span>EN</span>
+              </label>
+            </div>
           </div>
 
           <hr class="settings-divider">
 
-          <div class="settings-section">
+          <div class="settings-section settings-row">
             <h4 data-i18n="settings.auto_blur"><i class="fa-solid fa-eye-slash"></i> 自动模糊 NSFW 封面</h4>
-            <label class="toggle-label" role="menuitemcheckbox">
-              <input type="checkbox" id="nsfw-blur-toggle" checked> <span data-i18n="settings.auto_blur">自动模糊 NSFW 封面</span>
+            <label class="glass-switch">
+              <input type="checkbox" id="nsfw-blur-toggle" checked>
+              <span class="switch-slider"></span>
             </label>
           </div>
 
           <hr class="settings-divider">
 
-          <button id="update-tags-btn" class="settings-btn" aria-label="更新标签库">
+          <button id="update-tags-btn" class="jelly-btn small" aria-label="更新标签库">
             <i class="fa-solid fa-rotate"></i> <span data-i18n="settings.update_tags">更新标签库</span>
           </button>
         </div>
