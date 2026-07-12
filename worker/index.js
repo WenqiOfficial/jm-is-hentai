@@ -169,6 +169,45 @@ export default {
       }
     }
 
+    // --- E-Hentai Gallery Details ---
+    if (url.pathname === '/api/ehentai/gallery') {
+      const gid = url.searchParams.get('gid');
+      const token = url.searchParams.get('token');
+      
+      if (!gid || !token) {
+        return new Response(JSON.stringify({ error: "Missing gid or token" }), { status: 400, headers: { "Access-Control-Allow-Origin": "*" } });
+      }
+
+      try {
+        const payload = {
+          method: "gdata",
+          gidlist: [[parseInt(gid), token]],
+          namespace: 1
+        };
+
+        const resp = await fetch('https://api.e-hentai.org/api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(10000)
+        });
+
+        const data = await resp.json();
+        if (data.gmetadata && data.gmetadata.length > 0) {
+          const meta = data.gmetadata[0];
+          return new Response(JSON.stringify({ gallery: meta }), {
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        } else {
+          throw new Error('Gallery not found in API response');
+        }
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+    }
     // --- JMComic Search ---
     if (url.pathname === '/api/jmcomic/search') {
       const q = url.searchParams.get('q');
@@ -211,6 +250,7 @@ export default {
                   title: item.name,
                   author: item.author || '',
                   url: `https://18comic.vip/album/${item.id}`,
+                  thumbnail: `https://${domain}/media/albums/${item.id}_3x4.jpg`
                 }));
 
                 return new Response(JSON.stringify({ results }), {

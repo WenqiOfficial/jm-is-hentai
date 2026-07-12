@@ -47,7 +47,6 @@ body {
   background-color: var(--bg-color);
   min-height: 100vh;
   overflow-x: hidden;
-  perspective: 1000px;
 }
 
 /* ===== Background ===== */
@@ -59,6 +58,9 @@ body {
   height: 100vh;
   z-index: -1;
   overflow: hidden;
+  /* Smooth gradient transition to normal background color at the bottom */
+  -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 }
 
 /* WebGL Canvas (injected by JS) */
@@ -205,6 +207,46 @@ body {
   margin-bottom: 12px;
   font-size: 14px;
   color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-section {
+  padding: 4px 0;
+}
+
+.settings-divider {
+  border: 0;
+  height: 1px;
+  background: var(--glass-border);
+  margin: 12px 0;
+}
+
+.settings-btn {
+  width: 100%;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+  font-family: inherit;
+}
+
+.settings-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.settings-btn:active {
+  transform: translateY(0);
 }
 
 .toggle-label {
@@ -236,7 +278,7 @@ body {
   .container {
     flex-direction: row;
     flex-wrap: wrap;
-    padding: 20px;
+    padding: 100px 20px 60px;
   }
 }
 
@@ -249,8 +291,9 @@ body {
   max-width: 450px;
   width: 100%;
 }
-.visual-area { z-index: 2; }
-.operation-area, .transfer-area { z-index: 3; }
+.visual-area { z-index: 2; view-transition-name: visual-area; }
+.operation-area { z-index: 3; view-transition-name: operation-area; }
+.transfer-area { z-index: 3; view-transition-name: transfer-area; }
 
 .visual-content {
   width: 100%;
@@ -282,6 +325,7 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: top center; /* Better framing for character art */
+  image-rendering: -webkit-optimize-contrast; /* Helps with stretched E-Hentai thumbnails */
   animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -556,7 +600,7 @@ body {
 
 /* ===== Transfer Panel (换乘) ===== */
 .transfer-area {
-  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* No more slideInRight animation, View Transitions API handles the smooth appearance natively */
 }
 
 /* Mobile: stack below operation area */

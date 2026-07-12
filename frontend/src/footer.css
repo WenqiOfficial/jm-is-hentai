@@ -1,0 +1,32 @@
+/* ===== Rolling Footer ===== */
+.footer {
+  margin-top: auto;
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  min-height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer i {
+  color: #ff6b6b;
+  margin: 0 4px;
+}
+
+#footer-text-container {
+  margin: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.fade-in-up {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-out-up {
+  opacity: 0;
+  transform: translateY(-10px);
+}

@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="no-referrer">
   <meta name="description" content="神秘数字转换器 — JMComic 编号检索工具，快速查询漫画信息">
   <title>神秘数字转换器</title>
   <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="./src/toast.css">
+  <link rel="stylesheet" href="./src/footer.css">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -28,16 +31,42 @@
         <div id="settings-panel" class="settings-panel is-hidden"
              role="menu"
              aria-label="数据源设置">
-          <h4>数据源设置</h4>
-          <label class="toggle-label" role="menuitemradio">
-            <input type="radio" name="datasource" value="api" checked> 后端 API 代理 (推荐)
-          </label>
-          <label class="toggle-label" role="menuitemradio">
-            <input type="radio" name="datasource" value="frontend"> 前端直连 (省流/需跨域)
-          </label>
+          <div class="settings-section">
+            <h4 data-i18n="settings.datasource"><i class="fa-solid fa-server"></i> 数据源设置</h4>
+            <label class="toggle-label" role="menuitemradio">
+              <input type="radio" name="datasource" value="api" checked> <span data-i18n="settings.ds_api">后端 API 代理 (推荐)</span>
+            </label>
+            <label class="toggle-label" role="menuitemradio">
+              <input type="radio" name="datasource" value="frontend"> <span data-i18n="settings.ds_frontend">前端直连 (省流/需跨域)</span>
+            </label>
+          </div>
+          
+          <hr class="settings-divider">
+
+          <div class="settings-section">
+            <h4 data-i18n="settings.language"><i class="fa-solid fa-earth-asia"></i> 语言设置</h4>
+            <label class="toggle-label" role="menuitemradio">
+              <input type="radio" name="language" value="auto" checked> <span data-i18n="settings.lang_auto">自动探测 (Auto)</span>
+            </label>
+            <label class="toggle-label" role="menuitemradio">
+              <input type="radio" name="language" value="zh"> 简体中文
+            </label>
+            <label class="toggle-label" role="menuitemradio">
+              <input type="radio" name="language" value="ja"> 日本語
+            </label>
+            <label class="toggle-label" role="menuitemradio">
+              <input type="radio" name="language" value="en"> English
+            </label>
+          </div>
+
+          <hr class="settings-divider">
+
+          <button id="update-tags-btn" class="settings-btn" aria-label="更新标签库">
+            <i class="fa-solid fa-rotate"></i> <span data-i18n="settings.update_tags">更新标签库</span>
+          </button>
         </div>
       </div>
-      <div class="logo"><i class="fa-solid fa-cloud"></i> 神秘数字转换器</div>
+      <div class="logo"><i class="fa-solid fa-cloud"></i> <span data-i18n="app.title">神秘数字转换器</span></div>
     </div>
   </header>
 
@@ -45,19 +74,19 @@
     <div class="visual-area">
       <div id="visual-content" class="visual-content placeholder">
         <!-- 看板娘或封面占位 -->
-        <span><i class="fa-solid fa-image"></i> 等待检索...</span>
+        <span><i class="fa-solid fa-image"></i> <span data-i18n="visual.waiting">等待检索...</span></span>
       </div>
     </div>
 
     <div class="operation-area">
       <div class="float-wrapper">
         <div class="card glass-card">
-          <h1 class="card-title">检索你的车牌号</h1>
+          <h1 class="card-title" data-i18n="search.title">检索你的车牌号</h1>
           
           <div class="platform-toggle" role="radiogroup" aria-label="搜索平台">
             <label class="platform-btn active">
               <input type="radio" name="platform" value="jm" checked>
-              <i class="fa-solid fa-book-open"></i> 禁漫
+              <i class="fa-solid fa-book-open"></i> <span data-i18n="platform.jm">禁漫</span>
             </label>
             <label class="platform-btn">
               <input type="radio" name="platform" value="eh">
@@ -67,11 +96,12 @@
 
           <div class="input-group">
             <input type="text" id="jm-id-input"
+                   data-i18n-placeholder="search.input_jm"
                    placeholder="输入 JMComic 编号..."
                    class="rounded-input"
                    aria-label="JMComic 编号输入" />
             <button id="search-btn" class="jelly-btn" aria-label="搜索漫画">
-              <i class="fa-solid fa-magnifying-glass"></i> 检索
+              <i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="search.button">检索</span>
             </button>
           </div>
 
@@ -79,7 +109,7 @@
             <div class="result-stack">
               <div class="loading fade-element" id="loading-indicator" style="display: none;">
                 <div class="spinner"></div>
-                <p>正在云端寻找...</p>
+                <p data-i18n="search.loading">正在云端寻找...</p>
               </div>
 
               <div class="error-msg fade-element" id="error-msg" style="display: none;"></div>
@@ -93,8 +123,8 @@
                 <div class="actions">
                   <a href="#" id="jm-link" target="_blank" rel="noopener"
                      class="jelly-btn alt"
-                     aria-label="前往 JMComic 阅读">
-                    <i class="fa-solid fa-book-open"></i> 前往 JMComic
+                     aria-label="前往网站阅读">
+                    <i class="fa-solid fa-book-open"></i> <span data-i18n="comic.read_jm">前往 JMComic</span>
                   </a>
                 </div>
               </div>
@@ -108,7 +138,7 @@
     <div class="transfer-area" id="transfer-area" style="display: none;">
       <div class="float-wrapper transfer-float">
         <div class="card glass-card" id="transfer-card">
-          <h2 class="card-title"><i class="fa-solid fa-shuffle"></i> 换乘</h2>
+          <h2 class="card-title"><i class="fa-solid fa-shuffle"></i> <span data-i18n="transfer.title">换乘</span></h2>
 
           <div class="transfer-tabs" id="transfer-tabs" role="tablist" aria-label="换乘平台">
             <!-- Tabs generated dynamically by JS -->
@@ -116,6 +146,7 @@
 
           <div class="transfer-search-group">
             <input type="text" id="transfer-keyword-input"
+                   data-i18n-placeholder="transfer.input_keyword"
                    placeholder="修改检索词..."
                    class="rounded-input small-input"
                    aria-label="换乘检索词修改" />
@@ -127,17 +158,17 @@
           <div class="transfer-content" id="transfer-content">
             <div class="transfer-loading fade-element" id="transfer-loading" style="display: none;">
               <div class="spinner"></div>
-              <p>正在模糊检索...</p>
+              <p data-i18n="transfer.loading">正在模糊检索...</p>
             </div>
 
             <div class="transfer-empty fade-element" id="transfer-empty" style="display: none;">
               <i class="fa-solid fa-cloud-moon"></i>
-              <p>暂无匹配结果</p>
+              <p data-i18n="transfer.empty">暂无匹配结果</p>
             </div>
 
             <div class="transfer-coming-soon fade-element" id="transfer-coming-soon" style="display: none;">
               <i class="fa-solid fa-clock"></i>
-              <p>即将支持，敬请期待</p>
+              <p data-i18n="transfer.coming_soon">即将支持，敬请期待</p>
             </div>
 
             <div class="transfer-results fade-element" id="transfer-results" style="display: none;">
@@ -149,11 +180,13 @@
     </div>
   </main>
 
-  <footer class="footer" role="contentinfo">
-    <p><i class="fa-solid fa-heart"></i> Made with love</p>
+  <!-- Rolling Footer -->
+  <footer class="footer" role="contentinfo" id="app-footer">
+    <p id="footer-text-container"></p>
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/node-vibrant/3.1.6/vibrant.min.js"></script>
   <script type="module" src="./src/main.js"></script>
+  <script type="module" src="./src/footer.js"></script>
 </body>
 </html>

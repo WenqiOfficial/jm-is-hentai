@@ -1,8 +1,11 @@
 import { fetchAlbumInfo } from './jmcomic.js';
 import { WebGLBackground } from './webgl-background.js';
-import { getTransferTargets, searchEhentai } from './transfer.js';
+import { getTransferTargets, searchEhentai, fetchEhentaiGallery } from './transfer.js';
+import { initI18n, t, getCurrentLang } from './i18n.js';
+import { translateTag, checkAndUpdateTags } from './tag-translator.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  initI18n();
   // === DOM References ===
   const input = document.getElementById('jm-id-input');
   const searchBtn = document.getElementById('search-btn');
@@ -188,19 +191,46 @@ document.addEventListener('DOMContentLoaded', () => {
     visualContent.innerHTML = '';
     visualContent.classList.remove('placeholder');
 
-    const cdnDomain = album._source_domain || 'www.cdnaspa.vip';
-    const rawImgUrl = `https://${cdnDomain}/media/albums/${album.id}_3x4.jpg`;
-    const imgUrl = `https://img.wenqi.icu/?url=${encodeURIComponent(rawImgUrl)}`;
+    let rawImgUrl;
+    if (album._source_domain === 'eh') {
+      rawImgUrl = album._thumbnail || 'https://ehgt.org/g/ehgt.png';
+    } else {
+      const cdnDomain = album._source_domain || 'www.cdnaspa.vip';
+      rawImgUrl = `https://${cdnDomain}/media/albums/${album.id}_3x4.jpg`;
+    }
+    const proxyImgUrl = `https://img.1224630.xyz/?url=${encodeURIComponent(rawImgUrl)}`;
 
-    const img = document.createElement('img');
-    img.crossOrigin = 'Anonymous';
-    img.src = imgUrl;
-    img.alt = album.name;
+    // 1. Visible Display Image (Direct link, no proxy, no CORS, for fast loading)
+    const displayImg = document.createElement('img');
+    displayImg.src = rawImgUrl;
+    displayImg.alt = album.name || 'Cover';
+    
+    displayImg.onerror = () => {
+      // If direct link fails (e.g., E-Hentai hotlink protection), fallback to proxy for display too
+      if (displayImg.src !== proxyImgUrl) {
+        displayImg.src = proxyImgUrl;
+      } else {
+        visualContent.innerHTML = '<span><i class="fa-solid fa-image-slash"></i> 暂无封面</span>';
+        visualContent.classList.add('placeholder');
+        // Reset colors to defaults
+        document.documentElement.style.removeProperty('--primary-color');
+        document.documentElement.style.removeProperty('--primary-btn');
+        document.documentElement.style.removeProperty('--secondary-color');
+        document.documentElement.style.removeProperty('--accent-color');
+        if (webglBg) webglBg.resetColors();
+      }
+    };
 
-    img.onload = () => {
-      // Use node-vibrant if available
-      if (typeof Vibrant !== 'undefined') {
-        const vibrant = new Vibrant(img, { quality: 1 });
+    visualContent.appendChild(displayImg);
+
+    // 2. Hidden Proxy Image (CORS enabled, used ONLY for Vibrant.js color extraction)
+    if (typeof Vibrant !== 'undefined') {
+      const proxyImg = new Image();
+      proxyImg.crossOrigin = 'Anonymous';
+      proxyImg.src = proxyImgUrl;
+      
+      proxyImg.onload = () => {
+        const vibrant = new Vibrant(proxyImg, { quality: 1 });
         vibrant.getPalette().then(palette => {
           let c1 = [160, 196, 255]; // fallback
           let c2 = [255, 198, 255];
@@ -224,37 +254,19 @@ document.addEventListener('DOMContentLoaded', () => {
           c2 = pastelify(c2);
           c3 = pastelify(c3);
 
-          // CSS @property transitions handle smooth interpolation for UI elements
-          document.documentElement.style.setProperty('--primary-color', `rgb(${c1[0]}, ${c1[1]}, ${c1[2]})`);
-          document.documentElement.style.setProperty('--primary-btn', `rgb(${btnColor[0]}, ${btnColor[1]}, ${btnColor[2]})`);
-          document.documentElement.style.setProperty('--secondary-color', `rgb(${c2[0]}, ${c2[1]}, ${c2[2]})`);
-          document.documentElement.style.setProperty('--accent-color', `rgb(${c3[0]}, ${c3[1]}, ${c3[2]})`);
+          document.documentElement.style.setProperty('--primary-color', `rgb(${c1.join(',')})`);
+          document.documentElement.style.setProperty('--primary-btn', `rgb(${btnColor.join(',')})`);
+          document.documentElement.style.setProperty('--secondary-color', `rgb(${c2.join(',')})`);
+          document.documentElement.style.setProperty('--accent-color', `rgb(${c3.join(',')})`);
 
           // WebGL background uses internal lerp for smooth shader color transition
           if (webglBg) {
             webglBg.setColors(c1, c2, c3);
           }
         }).catch(err => {
-          console.log('Vibrant extraction failed:', err);
+          console.warn('Vibrant extraction failed:', err);
         });
-      }
-    };
-
-    img.onerror = () => {
-      visualContent.innerHTML = '<span><i class="fa-solid fa-image-slash"></i> 暂无封面</span>';
-      visualContent.classList.add('placeholder');
-      // Reset colors to defaults
-      document.documentElement.style.removeProperty('--primary-color');
-      document.documentElement.style.removeProperty('--primary-btn');
-      document.documentElement.style.removeProperty('--secondary-color');
-      document.documentElement.style.removeProperty('--accent-color');
-      if (webglBg) webglBg.resetColors();
-    };
-
-    if (album._source_domain === 'eh') {
-      img.src = album._thumbnail || 'https://ehgt.org/g/ehgt.png';
-    } else {
-      visualContent.appendChild(img);
+      };
     }
   };
 
@@ -269,12 +281,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentPlatform === 'jm') {
       query = query.replace(/\D/g, '');
       if (!query) {
-        showError('请输入有效的数字车牌号');
+        showError(t('alert.empty_jm'));
         return;
       }
     } else {
       if (!query) {
-        showError('请输入 E-Hentai 检索词');
+        showError(t('alert.empty_eh'));
         return;
       }
     }
@@ -292,20 +304,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Populate comic info
         comicTitle.textContent = album.name || `JMComic - ${query}`;
-        comicAuthor.textContent = `作者: ${(album.author || []).join(', ') || '未知'}`;
+        comicAuthor.textContent = `${t('comic.author')}: ${(album.author || []).join(', ') || '未知'}`;
 
         // Tags with stagger pop animation
         comicTags.innerHTML = '';
+        const currentLang = getCurrentLang();
         (album.tags || []).forEach((tag, index) => {
           const span = document.createElement('span');
           span.className = 'tag';
-          span.textContent = tag;
+          span.textContent = translateTag(tag, currentLang);
+          if (currentLang === 'zh') span.title = tag; // Show original on hover
           span.style.animation = `tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both`;
           comicTags.appendChild(span);
         });
 
         jmLink.href = `https://18comic.vip/album/${query}`;
-        jmLink.innerHTML = '<i class="fa-solid fa-book-open"></i> 前往 JMComic';
+        jmLink.innerHTML = `<i class="fa-solid fa-book-open"></i> ${t('comic.read_jm')}`;
 
         updateVisual(album);
 
@@ -315,29 +329,48 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (currentPlatform === 'eh') {
         const results = await searchEhentai(query);
         if (!results || results.length === 0) {
-          throw new Error('未找到相关的 E-Hentai 画廊');
+          throw new Error(t('alert.no_eh_gallery'));
         }
 
-        const album = results[0];
+        const baseAlbum = results[0];
+        
+        // Fetch rich metadata using the new E-Hentai gdata API
+        const galleryDetails = await fetchEhentaiGallery(baseAlbum.gid, baseAlbum.token);
+        const album = galleryDetails || baseAlbum; // Fallback to base album if detail fetch fails
+        const tags = album.tags || [];
 
         // Smoothly transition from loading to comic info
         smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, errorMsg], comicInfo, 'flex');
 
-        comicTitle.textContent = album.title || query;
-        comicAuthor.textContent = `来源: E-Hentai`;
+        const currentLang = getCurrentLang();
+        
+        // Extract title (English title is usually title, JPN title is title_jpn if exists)
+        comicTitle.textContent = album.title_jpn || album.title || baseAlbum.title || query;
+        comicAuthor.textContent = album.uploader ? `${t('comic.uploader')}: ${album.uploader}` : `${t('comic.source')}: E-Hentai`;
+        
+        // Tags with stagger pop animation
         comicTags.innerHTML = '';
+        tags.forEach((tag, index) => {
+          const span = document.createElement('span');
+          span.className = 'tag';
+          // E-Hentai tags often have a namespace prefix like 'artist:xxx'
+          span.textContent = translateTag(tag, currentLang);
+          if (currentLang === 'zh') span.title = tag; // Show original on hover
+          span.style.animation = `tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both`;
+          comicTags.appendChild(span);
+        });
 
-        jmLink.href = album.url || '#';
-        jmLink.innerHTML = '<i class="fa-solid fa-paw"></i> 前往 E-Hentai';
+        jmLink.href = baseAlbum.url || '#';
+        jmLink.innerHTML = `<i class="fa-solid fa-paw"></i> ${t('comic.read_eh')}`;
 
         updateVisual({
           id: query,
-          name: album.title,
+          name: comicTitle.textContent,
           _source_domain: 'eh',
-          _thumbnail: album.thumbnail
+          _thumbnail: album.thumb || baseAlbum.thumbnail
         });
 
-        triggerTransfer(album.title || query, currentPlatform);
+        triggerTransfer(baseAlbum.title || query, currentPlatform);
       }
     } catch (err) {
       smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, comicInfo], errorMsg, 'block');
@@ -386,12 +419,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!title) return [];
     // Accurately match matching bracket pairs to handle nested/adjacent brackets.
     const stripped = title.replace(/\[[^\]]*\]|\([^)]*\)|【[^】]*】|（[^）]*）|<[^>]*>/g, '|||');
-    const candidates = stripped.split('|||')
+    let candidates = stripped.split('|||')
       .map(s => s.replace(/^[\]\)】）>]+|[\[\(【（<]+$/g, '').trim()) // Clean lingering symbols
       .filter(s => s.length > 0);
     
+    // Split by `|` (common in E-Hentai titles) and prioritize the right side (usually native/translated title)
+    const finalCandidates = [];
+    candidates.forEach(c => {
+      if (c.includes('|')) {
+        const parts = c.split('|').map(s => s.trim()).filter(s => s.length > 0);
+        // Reverse so the translated/native title (often on the right) is searched first
+        finalCandidates.push(...parts.reverse());
+      } else {
+        finalCandidates.push(c);
+      }
+    });
+
     // Fallback: if no candidates extracted, return the whole title
-    return candidates.length > 0 ? candidates : [title];
+    return finalCandidates.length > 0 ? finalCandidates : [title];
   }
 
   async function triggerTransfer(rawTitle, sourcePlatform) {
@@ -420,12 +465,22 @@ document.addEventListener('DOMContentLoaded', () => {
       transferTabs.appendChild(btn);
     });
 
-    // Show the panel
-    transferArea.style.display = 'flex';
+    // Function to show the panel and select first tab
+    const revealTransferPanel = () => {
+      transferArea.style.display = 'flex';
+      switchTransferTab(transferTargets[0].id, candidates);
+    };
 
-    // Bind 3D tilt to the transfer card
-    // Auto-select first tab
-    switchTransferTab(transferTargets[0].id, candidates);
+    // Use View Transitions API if supported for a buttery smooth layout reflow
+    if (transferArea.style.display === 'none') {
+      if (document.startViewTransition) {
+        document.startViewTransition(() => revealTransferPanel());
+      } else {
+        revealTransferPanel();
+      }
+    } else {
+      revealTransferPanel();
+    }
   }
 
   async function handleTransferSearch() {
@@ -510,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // If we reach here, the search returned 0 results or errored
       if (i < candidates.length - 1) {
         // We have more candidates to try, show a brief message before continuing
-        transferEmpty.querySelector('p').textContent = '自动检索暂无匹配，尝试更换词汇...';
+        transferEmpty.querySelector('p').textContent = t('alert.auto_empty');
         await smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
         
         if (activeTransferTab !== tabId) return;
@@ -524,14 +579,30 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // If all candidates failed or returned 0 results
     if (activeTransferTab === tabId) {
-      transferEmpty.querySelector('p').textContent = '暂无匹配结果';
+      transferEmpty.querySelector('p').textContent = t('transfer.empty');
       await smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
     }
   }
 
-  function renderTransferResults(results, tabId) {
+  async function renderTransferResults(results, tabId) {
     const ALL_STATES = [transferLoading, transferEmpty, transferComingSoon, transferResults];
     
+    // If switching between cached result lists in the same container, fade out first
+    if (transferResults.style.display !== 'none' && transferResults.classList.contains('fade-in')) {
+      // Freeze the container height so it doesn't collapse to 0 when we clear innerHTML
+      transferContent.style.height = transferContent.offsetHeight + 'px';
+      transferContent.style.overflow = 'hidden';
+
+      transferResults.classList.remove('fade-in');
+      await new Promise(r => setTimeout(r, 200));
+      // Abort if tab changed during fade out
+      if (activeTransferTab !== tabId) {
+        transferContent.style.height = '';
+        transferContent.style.overflow = '';
+        return;
+      }
+    }
+
     // Build DOM without showing it yet
     transferResults.innerHTML = '';
 
@@ -553,6 +624,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const thumb = document.createElement('img');
         thumb.className = 'transfer-result-thumb';
         thumb.src = item.thumbnail;
+        const proxyUrl = `https://img.1224630.xyz/?url=${encodeURIComponent(item.thumbnail)}`;
+        thumb.onerror = () => {
+          if (thumb.src !== proxyUrl) {
+            thumb.src = proxyUrl;
+          }
+        };
         thumb.alt = '';
         thumb.loading = 'lazy';
         a.appendChild(thumb);
@@ -589,9 +666,11 @@ document.addEventListener('DOMContentLoaded', () => {
         e.target.parentElement.classList.add('active');
         // Update input placeholder based on platform
         if (e.target.value === 'eh') {
-          input.placeholder = '输入 E-Hentai 检索词...';
+          input.placeholder = t('search.input_eh');
+          input.setAttribute('data-i18n-placeholder', 'search.input_eh');
         } else {
-          input.placeholder = '输入 JMComic 编号...';
+          input.placeholder = t('search.input_jm');
+          input.setAttribute('data-i18n-placeholder', 'search.input_jm');
         }
       }
     });
@@ -616,4 +695,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Bind Update Tags button
+  const updateTagsBtn = document.getElementById('update-tags-btn');
+  if (updateTagsBtn) {
+    updateTagsBtn.addEventListener('click', () => {
+      checkAndUpdateTags(true);
+    });
+  }
 });
