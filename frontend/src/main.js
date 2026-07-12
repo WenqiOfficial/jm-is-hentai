@@ -1,6 +1,6 @@
 import { fetchAlbumInfo } from './jmcomic.js';
 import { WebGLBackground } from './webgl-background.js';
-import { getTransferTargets } from './transfer.js';
+import { getTransferTargets, searchEhentai } from './transfer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // === DOM References ===
@@ -53,6 +53,72 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.display = 'none';
       }
     }, 450);
+  }
+
+  /**
+   * Smoothly transitions container height while crossfading child elements.
+   * @param {HTMLElement} container - The wrapper element whose height will be morphed.
+   * @param {HTMLElement[]} outgoingElements - Elements to fade out and hide.
+   * @param {HTMLElement} incomingElement - The new element to show.
+   * @param {string} displayMode - The display type for incoming element (default 'block').
+   */
+  async function smoothStateSwitch(container, outgoingElements, incomingElement, displayMode = 'block') {
+    if (!container) return;
+    
+    // 1. Lock current height
+    const currentHeight = container.offsetHeight;
+    container.style.height = currentHeight + 'px';
+    container.style.overflow = 'hidden';
+    container.style.transition = 'height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+    // 2. Fade out old elements
+    let hasOutgoing = false;
+    outgoingElements.forEach(el => {
+      if (el && el.style.display !== 'none' && el.classList.contains('fade-in')) {
+        el.classList.remove('fade-in');
+        hasOutgoing = true;
+      }
+    });
+
+    if (hasOutgoing) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    // 3. Hide old elements
+    outgoingElements.forEach(el => {
+      if (el) el.style.display = 'none';
+    });
+    
+    let targetHeight = 0;
+    if (incomingElement) {
+      // Show incoming element invisibly to measure its height
+      incomingElement.style.display = displayMode;
+      incomingElement.style.opacity = '0';
+      incomingElement.style.position = 'absolute';
+      incomingElement.style.width = '100%';
+      
+      targetHeight = incomingElement.offsetHeight;
+      
+      incomingElement.style.position = '';
+      incomingElement.style.opacity = '';
+      incomingElement.style.width = '';
+    }
+
+    // 4. Animate container height to target
+    container.style.height = targetHeight + 'px';
+
+    if (incomingElement) {
+      // Force reflow and fade in
+      void incomingElement.offsetWidth;
+      incomingElement.classList.add('fade-in');
+    }
+
+    // 5. Cleanup after transition completes
+    setTimeout(() => {
+      container.style.height = '';
+      container.style.overflow = '';
+      container.style.transition = '';
+    }, 400);
   }
 
   // ============================================
@@ -140,8 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
           let c2 = [255, 198, 255];
           let c3 = [253, 255, 182];
 
-          // We prioritize Vibrant and LightVibrant for healing, saturated colors
-          if (palette.Vibrant) c1 = palette.Vibrant.rgb;
+          c1 = palette.Vibrant ? palette.Vibrant.rgb : c1;
+          let btnColor = [...c1]; // Save un-pastelified color for high-contrast buttons
+
           if (palette.LightVibrant) c2 = palette.LightVibrant.rgb;
           if (palette.Muted) c3 = palette.Muted.rgb;
           else if (palette.DarkVibrant) c3 = palette.DarkVibrant.rgb;
@@ -159,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // CSS @property transitions handle smooth interpolation for UI elements
           document.documentElement.style.setProperty('--primary-color', `rgb(${c1[0]}, ${c1[1]}, ${c1[2]})`);
+          document.documentElement.style.setProperty('--primary-btn', `rgb(${btnColor[0]}, ${btnColor[1]}, ${btnColor[2]})`);
           document.documentElement.style.setProperty('--secondary-color', `rgb(${c2[0]}, ${c2[1]}, ${c2[2]})`);
           document.documentElement.style.setProperty('--accent-color', `rgb(${c3[0]}, ${c3[1]}, ${c3[2]})`);
 
@@ -177,12 +245,17 @@ document.addEventListener('DOMContentLoaded', () => {
       visualContent.classList.add('placeholder');
       // Reset colors to defaults
       document.documentElement.style.removeProperty('--primary-color');
+      document.documentElement.style.removeProperty('--primary-btn');
       document.documentElement.style.removeProperty('--secondary-color');
       document.documentElement.style.removeProperty('--accent-color');
       if (webglBg) webglBg.resetColors();
     };
 
-    visualContent.appendChild(img);
+    if (album._source_domain === 'eh') {
+      img.src = album._thumbnail || 'https://ehgt.org/g/ehgt.png';
+    } else {
+      visualContent.appendChild(img);
+    }
   };
 
   // ============================================
@@ -190,63 +263,92 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================
 
   const handleSearch = async () => {
-    const jmId = input.value.trim().replace(/\D/g, '');
+    const currentPlatform = document.querySelector('input[name="platform"]:checked')?.value || 'jm';
+    let query = input.value.trim();
 
-    if (!jmId) {
-      showError('请输入有效的数字车牌号');
-      return;
+    if (currentPlatform === 'jm') {
+      query = query.replace(/\D/g, '');
+      if (!query) {
+        showError('请输入有效的数字车牌号');
+        return;
+      }
+    } else {
+      if (!query) {
+        showError('请输入 E-Hentai 检索词');
+        return;
+      }
     }
 
     // Show result area & loading, hide previous results
     resultContainer.style.display = 'block';
-    fadeIn(loadingIndicator, 'flex');
-    fadeOut(errorMsg);
-    fadeOut(comicInfo);
+    smoothStateSwitch(resultContainer.querySelector('.result-stack'), [errorMsg, comicInfo], loadingIndicator, 'flex');
 
     try {
-      const album = await fetchAlbumInfo(jmId, fetchMode);
+      if (currentPlatform === 'jm') {
+        const album = await fetchAlbumInfo(query, fetchMode);
 
-      fadeOut(loadingIndicator);
+        // Smoothly transition from loading to comic info
+        smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, errorMsg], comicInfo, 'flex');
 
-      // Populate comic info
-      comicTitle.textContent = album.name || `JMComic - ${jmId}`;
-      comicAuthor.textContent = `作者: ${(album.author || []).join(', ') || '未知'}`;
+        // Populate comic info
+        comicTitle.textContent = album.name || `JMComic - ${query}`;
+        comicAuthor.textContent = `作者: ${(album.author || []).join(', ') || '未知'}`;
 
-      // Tags with stagger pop animation
-      comicTags.innerHTML = '';
-      (album.tags || []).forEach((tag, index) => {
-        const span = document.createElement('span');
-        span.className = 'tag';
-        span.setAttribute('role', 'listitem');
-        span.textContent = tag;
-        span.style.animation = `tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both`;
-        comicTags.appendChild(span);
-      });
+        // Tags with stagger pop animation
+        comicTags.innerHTML = '';
+        (album.tags || []).forEach((tag, index) => {
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.textContent = tag;
+          span.style.animation = `tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both`;
+          comicTags.appendChild(span);
+        });
 
-      jmLink.href = `https://18comic.vip/album/${jmId}`;
+        jmLink.href = `https://18comic.vip/album/${query}`;
+        jmLink.innerHTML = '<i class="fa-solid fa-book-open"></i> 前往 JMComic';
 
-      // Small delay lets loading fade out before comic info fades in
-      setTimeout(() => {
-        fadeIn(comicInfo, 'flex');
-      }, 180);
+        updateVisual(album);
 
-      updateVisual(album);
+        // Trigger transfer panel search
+        triggerTransfer(album.name || '', currentPlatform);
 
-      // Trigger transfer panel search
-      const currentPlatform = document.querySelector('input[name="platform"]:checked')?.value || 'jm';
-      triggerTransfer(album.name || '', currentPlatform);
+      } else if (currentPlatform === 'eh') {
+        const results = await searchEhentai(query);
+        if (!results || results.length === 0) {
+          throw new Error('未找到相关的 E-Hentai 画廊');
+        }
+
+        const album = results[0];
+
+        // Smoothly transition from loading to comic info
+        smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, errorMsg], comicInfo, 'flex');
+
+        comicTitle.textContent = album.title || query;
+        comicAuthor.textContent = `来源: E-Hentai`;
+        comicTags.innerHTML = '';
+
+        jmLink.href = album.url || '#';
+        jmLink.innerHTML = '<i class="fa-solid fa-paw"></i> 前往 E-Hentai';
+
+        updateVisual({
+          id: query,
+          name: album.title,
+          _source_domain: 'eh',
+          _thumbnail: album.thumbnail
+        });
+
+        triggerTransfer(album.title || query, currentPlatform);
+      }
     } catch (err) {
-      fadeOut(loadingIndicator);
-      setTimeout(() => {
-        showError(err.message);
-      }, 180);
+      smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, comicInfo], errorMsg, 'block');
+      errorMsg.textContent = err.message;
     }
   };
 
   const showError = (msg) => {
     resultContainer.style.display = 'block';
     errorMsg.textContent = msg;
-    fadeIn(errorMsg);
+    smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, comicInfo], errorMsg, 'block');
   };
 
   searchBtn.addEventListener('click', handleSearch);
@@ -267,13 +369,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const transferEmpty = document.getElementById('transfer-empty');
   const transferComingSoon = document.getElementById('transfer-coming-soon');
   const transferCard = document.getElementById('transfer-card');
+  const transferKeywordInput = document.getElementById('transfer-keyword-input');
+  const transferSearchBtn = document.getElementById('transfer-search-btn');
+  const transferContent = document.getElementById('transfer-content');
 
   let transferTargets = [];
   let activeTransferTab = null;
-  // Cache: { tabId: results[] }
+  // Cache: { tabId_keyword: results[] }
   let transferCache = {};
 
-  async function triggerTransfer(comicTitle, sourcePlatform) {
+  /**
+   * Splits a complex title into multiple candidate search keywords.
+   * e.g., "中文标题 [社团] 日文原名 [翻译]" -> ["中文标题", "日文原名"]
+   */
+  function extractSearchCandidates(title) {
+    if (!title) return [];
+    // Accurately match matching bracket pairs to handle nested/adjacent brackets.
+    const stripped = title.replace(/\[[^\]]*\]|\([^)]*\)|【[^】]*】|（[^）]*）|<[^>]*>/g, '|||');
+    const candidates = stripped.split('|||')
+      .map(s => s.replace(/^[\]\)】）>]+|[\[\(【（<]+$/g, '').trim()) // Clean lingering symbols
+      .filter(s => s.length > 0);
+    
+    // Fallback: if no candidates extracted, return the whole title
+    return candidates.length > 0 ? candidates : [title];
+  }
+
+  async function triggerTransfer(rawTitle, sourcePlatform) {
+    const candidates = extractSearchCandidates(rawTitle);
     transferTargets = getTransferTargets(sourcePlatform);
     transferCache = {};
     activeTransferTab = null;
@@ -283,6 +405,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Initialize search input with the first candidate
+    transferKeywordInput.value = candidates[0] || rawTitle;
+
     // Build tabs
     transferTabs.innerHTML = '';
     transferTargets.forEach((target, idx) => {
@@ -291,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.setAttribute('role', 'tab');
       btn.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
       btn.innerHTML = `<i class="${target.icon}"></i> ${target.label}`;
-      btn.addEventListener('click', () => switchTransferTab(target.id, comicTitle));
+      btn.addEventListener('click', () => switchTransferTab(target.id, candidates));
       transferTabs.appendChild(btn);
     });
 
@@ -299,13 +424,31 @@ document.addEventListener('DOMContentLoaded', () => {
     transferArea.style.display = 'flex';
 
     // Bind 3D tilt to the transfer card
-    bindTilt(transferCard);
-
     // Auto-select first tab
-    switchTransferTab(transferTargets[0].id, comicTitle);
+    switchTransferTab(transferTargets[0].id, candidates);
   }
 
-  async function switchTransferTab(tabId, comicTitle) {
+  async function handleTransferSearch() {
+    if (!activeTransferTab) return;
+    const keyword = transferKeywordInput.value.trim();
+    if (!keyword) return;
+    
+    // Force re-search on current tab with exactly the user's input (single candidate)
+    const tabId = activeTransferTab;
+    activeTransferTab = null; // reset to force re-render
+    switchTransferTab(tabId, [keyword]);
+  }
+
+  transferSearchBtn.addEventListener('click', handleTransferSearch);
+  transferKeywordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleTransferSearch();
+  });
+
+  async function switchTransferTab(tabId, candidatesOrKeyword) {
+    // Normalize to array
+    const candidates = Array.isArray(candidatesOrKeyword) ? [...candidatesOrKeyword] : [candidatesOrKeyword];
+    if (candidates.length === 0) return;
+
     if (activeTransferTab === tabId) return;
     activeTransferTab = tabId;
 
@@ -319,59 +462,81 @@ document.addEventListener('DOMContentLoaded', () => {
     const target = transferTargets.find(t => t.id === tabId);
     if (!target) return;
 
+    const ALL_STATES = [transferLoading, transferEmpty, transferComingSoon, transferResults];
+
     // Check if this is the placeholder (picacg)
     if (tabId === 'picacg') {
-      hideAllTransferStates();
-      fadeIn(transferComingSoon, 'flex');
+      smoothStateSwitch(transferContent, ALL_STATES, transferComingSoon, 'flex');
       return;
     }
 
-    // Check cache
-    if (transferCache[tabId]) {
-      renderTransferResults(transferCache[tabId], tabId);
-      return;
-    }
+    // Try candidates sequentially
+    for (let i = 0; i < candidates.length; i++) {
+      const comicTitle = candidates[i];
+      // Update the input to show what we are currently searching
+      transferKeywordInput.value = comicTitle;
+      
+      const cacheKey = `${tabId}_${comicTitle}`;
 
-    // Show loading
-    hideAllTransferStates();
-    fadeIn(transferLoading, 'flex');
-
-    try {
-      const results = await target.searchFn(comicTitle);
-      transferCache[tabId] = results;
-
-      // Only render if this tab is still active
-      if (activeTransferTab === tabId) {
-        fadeOut(transferLoading);
-        setTimeout(() => {
+      // Check cache
+      if (transferCache[cacheKey]) {
+        const results = transferCache[cacheKey];
+        if (results.length > 0 || i === candidates.length - 1) {
           renderTransferResults(results, tabId);
-        }, 180);
+          return;
+        }
+        continue; // Try next candidate if cached result is 0
       }
-    } catch (err) {
-      console.warn('Transfer search error:', err);
-      if (activeTransferTab === tabId) {
-        fadeOut(transferLoading);
-        setTimeout(() => {
-          hideAllTransferStates();
-          fadeIn(transferEmpty, 'flex');
-        }, 180);
+
+      // Show loading
+      await smoothStateSwitch(transferContent, ALL_STATES, transferLoading, 'flex');
+
+      let found = false;
+      try {
+        const results = await target.searchFn(comicTitle);
+        transferCache[cacheKey] = results;
+
+        // If tab changed during async await, abort
+        if (activeTransferTab !== tabId) return;
+
+        if (results && results.length > 0) {
+          renderTransferResults(results, tabId);
+          return; // Success, stop trying candidates
+        }
+      } catch (err) {
+        console.warn('Transfer search error:', err);
+      }
+
+      // If we reach here, the search returned 0 results or errored
+      if (i < candidates.length - 1) {
+        // We have more candidates to try, show a brief message before continuing
+        transferEmpty.querySelector('p').textContent = '自动检索暂无匹配，尝试更换词汇...';
+        await smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
+        
+        if (activeTransferTab !== tabId) return;
+        
+        // Let the user read the message for 1.2s before the next loop iteration starts
+        await new Promise(r => setTimeout(r, 1200));
+        
+        if (activeTransferTab !== tabId) return;
       }
     }
-  }
-
-  function hideAllTransferStates() {
-    fadeOut(transferLoading);
-    fadeOut(transferEmpty);
-    fadeOut(transferComingSoon);
-    transferResults.innerHTML = '';
+    
+    // If all candidates failed or returned 0 results
+    if (activeTransferTab === tabId) {
+      transferEmpty.querySelector('p').textContent = '暂无匹配结果';
+      await smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
+    }
   }
 
   function renderTransferResults(results, tabId) {
-    hideAllTransferStates();
+    const ALL_STATES = [transferLoading, transferEmpty, transferComingSoon, transferResults];
+    
+    // Build DOM without showing it yet
     transferResults.innerHTML = '';
 
     if (!results || results.length === 0) {
-      fadeIn(transferEmpty, 'flex');
+      smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
       return;
     }
 
@@ -409,7 +574,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       transferResults.appendChild(a);
     });
+
+    smoothStateSwitch(transferContent, ALL_STATES, transferResults, 'flex');
   }
+
+  // ============================================
+  //  Platform Toggle Sync
+  // ============================================
+  const platformRadios = document.querySelectorAll('.platform-toggle input[type="radio"]');
+  platformRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));
+      if (e.target.checked) {
+        e.target.parentElement.classList.add('active');
+        // Update input placeholder based on platform
+        if (e.target.value === 'eh') {
+          input.placeholder = '输入 E-Hentai 检索词...';
+        } else {
+          input.placeholder = '输入 JMComic 编号...';
+        }
+      }
+    });
+  });
 
   // ============================================
   //  Jelly Bounce on All Buttons
@@ -429,34 +615,5 @@ document.addEventListener('DOMContentLoaded', () => {
       );
     });
   });
-
-  // ============================================
-  //  3D Tilt Helper (reusable)
-  // ============================================
-
-  function bindTilt(card) {
-    if (!card || card._tiltBound) return;
-    card._tiltBound = true;
-
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      const rotateX = ((y - centerY) / centerY) * -8;
-      const rotateY = ((x - centerX) / centerX) * 8;
-      card.style.transition = 'transform 0.08s ease-out';
-      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-    });
-  }
-
-  // Bind tilt to all existing interactive cards
-  document.querySelectorAll('.interactive-card').forEach(bindTilt);
 
 });

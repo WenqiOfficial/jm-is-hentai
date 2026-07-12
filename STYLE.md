@@ -1,4 +1,4 @@
-# design.md - “神秘数字”转换器前端设计规范
+# design.md - “Hentai车站”转换器前端设计规范
 
 ## 1. 行业通用设计原则 (Industry Design Principles)
 

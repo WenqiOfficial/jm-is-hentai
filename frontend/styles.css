@@ -227,36 +227,30 @@ body {
   flex-direction: column;
   min-height: 100vh;
   padding: 80px 20px 60px;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
 }
 
 @media (min-width: 1024px) {
   .container {
     flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
+    flex-wrap: wrap;
+    padding: 20px;
   }
 }
 
-/* ===== Visual Area (Left / Top) ===== */
-.visual-area {
-  flex: 1;
+/* ===== Shared Layout Areas ===== */
+.visual-area, .operation-area, .transfer-area {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  z-index: 2;
+  flex: 1 1 400px;
+  max-width: 450px;
+  width: 100%;
 }
-
-/* Mobile: bottom edge fades into background */
-/* Desktop layout */
-@media (min-width: 1024px) {
-  .visual-area {
-    flex: 1;
-    padding-right: 5%;
-    justify-content: flex-end; /* Push to center alongside right block */
-  }
-}
+.visual-area { z-index: 2; }
+.operation-area, .transfer-area { z-index: 3; }
 
 .visual-content {
   width: 100%;
@@ -291,22 +285,7 @@ body {
   animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ===== Operation Area (Right / Bottom) ===== */
-.operation-area {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  z-index: 3;
-}
 
-@media (min-width: 1024px) {
-  .operation-area {
-    flex: 1;
-    justify-content: flex-start;
-    padding-left: 5%;
-  }
-}
 
 /* Float wrapper */
 .float-wrapper {
@@ -362,33 +341,44 @@ body {
   margin-bottom: 24px;
 }
 
-.platform-btn {
+/* ===== Shared Interactive Options (Tabs & Toggles) ===== */
+.platform-btn, .transfer-tab {
   background: rgba(255, 255, 255, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  padding: 10px 16px;
-  border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.3s ease;
   user-select: none;
+  color: var(--text-dark);
+}
+
+.platform-btn:hover, .transfer-tab:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.platform-btn.active, .transfer-tab.active {
+  background: var(--primary-btn, var(--primary-color));
+  color: white;
+  border-color: var(--primary-btn, var(--primary-color));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 40%, transparent);
+}
+
+/* Specifics for Platform Toggle & Transfer Tabs */
+.platform-btn, .transfer-tab {
+  padding: 10px 16px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .platform-btn input {
   display: none;
 }
 
-.platform-btn:hover {
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.platform-btn.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(160, 196, 255, 0.4);
+.platform-btn.active, .transfer-tab.active {
+  border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
 }
 
 /* ===== Input ===== */
@@ -408,8 +398,8 @@ body {
 
 .rounded-input:focus {
   background: rgba(255, 255, 255, 0.9);
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(167, 199, 231, 0.3);
+  border-color: var(--primary-btn, var(--primary-color));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 30%, transparent);
 }
 
 .rounded-input:focus-visible {
@@ -424,7 +414,7 @@ body {
   font-weight: bold;
   border: none;
   border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
-  background: var(--primary-color);
+  background: var(--primary-btn, var(--primary-color));
   color: white;
   cursor: pointer;
   font-family: inherit;
@@ -490,6 +480,7 @@ body {
 
 .result-stack {
   position: relative;
+  width: 100%;
 }
 
 .error-msg {
@@ -565,19 +556,7 @@ body {
 
 /* ===== Transfer Panel (换乘) ===== */
 .transfer-area {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  z-index: 3;
   animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@media (min-width: 1024px) {
-  .transfer-area {
-    flex: 0 0 auto;
-    align-items: center;
-    padding-left: 20px;
-  }
 }
 
 /* Mobile: stack below operation area */
@@ -623,16 +602,42 @@ body {
 }
 
 .transfer-tab.active {
-  background: var(--primary-color);
+  background: var(--primary-btn, var(--primary-color));
   color: white;
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(160, 196, 255, 0.4);
+  border-color: var(--primary-btn, var(--primary-color));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 40%, transparent);
+}
+
+/* Transfer Search Input */
+.transfer-search-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.small-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 20px 14px 20px 14px / 14px 20px 14px 20px;
+}
+
+.small-btn {
+  width: auto;
+  padding: 10px 18px;
+  font-size: 14px;
+  flex-shrink: 0;
+  border-radius: 14px 20px 14px 20px / 20px 14px 20px 14px;
 }
 
 /* Transfer Content Area */
 .transfer-content {
   min-height: 100px;
   position: relative;
+  width: 100%;
 }
 
 .transfer-loading,
@@ -771,6 +776,11 @@ body {
 @keyframes rotateZRight {
   0%, 100% { rotate: 1.5deg; }
   50% { rotate: -1.5deg; }
+}
+
+@keyframes floating {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 /* Cover image entrance: fade + slide + scale */

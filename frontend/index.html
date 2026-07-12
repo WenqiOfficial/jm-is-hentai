@@ -107,11 +107,21 @@
     <!-- Transfer Panel (换乘) — appears after successful search -->
     <div class="transfer-area" id="transfer-area" style="display: none;">
       <div class="float-wrapper transfer-float">
-        <div class="card glass-card interactive-card" id="transfer-card">
+        <div class="card glass-card" id="transfer-card">
           <h2 class="card-title"><i class="fa-solid fa-shuffle"></i> 换乘</h2>
 
           <div class="transfer-tabs" id="transfer-tabs" role="tablist" aria-label="换乘平台">
             <!-- Tabs generated dynamically by JS -->
+          </div>
+
+          <div class="transfer-search-group">
+            <input type="text" id="transfer-keyword-input"
+                   placeholder="修改检索词..."
+                   class="rounded-input small-input"
+                   aria-label="换乘检索词修改" />
+            <button id="transfer-search-btn" class="jelly-btn alt small-btn" aria-label="重新模糊检索">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
           </div>
 
           <div class="transfer-content" id="transfer-content">
@@ -130,7 +140,7 @@
               <p>即将支持，敬请期待</p>
             </div>
 
-            <div class="transfer-results" id="transfer-results">
+            <div class="transfer-results fade-element" id="transfer-results" style="display: none;">
               <!-- Results rendered by JS -->
             </div>
           </div>
