@@ -43,7 +43,7 @@
 
   <main class="container" role="main">
     <div class="visual-area">
-      <div id="visual-content" class="visual-content placeholder interactive-card">
+      <div id="visual-content" class="visual-content placeholder">
         <!-- 看板娘或封面占位 -->
         <span><i class="fa-solid fa-image"></i> 等待检索...</span>
       </div>
@@ -51,13 +51,7 @@
 
     <div class="operation-area">
       <div class="float-wrapper">
-        <div class="cloud-decorations">
-          <svg class="deco-cloud dc-1" viewBox="0 0 24 24"><path fill="currentColor" d="M17.5 19c2.48 0 4.5-2.02 4.5-4.5c0-2.05-1.37-3.81-3.23-4.34C18.6 6.57 15.63 4 12 4c-3.1 0-5.76 1.95-6.72 4.69C2.3 9.07 0 11.77 0 15c0 3.31 2.69 6 6 6h11.5z"/></svg>
-          <svg class="deco-cloud dc-2" viewBox="0 0 24 24"><path fill="currentColor" d="M17.5 19c2.48 0 4.5-2.02 4.5-4.5c0-2.05-1.37-3.81-3.23-4.34C18.6 6.57 15.63 4 12 4c-3.1 0-5.76 1.95-6.72 4.69C2.3 9.07 0 11.77 0 15c0 3.31 2.69 6 6 6h11.5z"/></svg>
-          <svg class="deco-cloud dc-3" viewBox="0 0 24 24"><path fill="currentColor" d="M17.5 19c2.48 0 4.5-2.02 4.5-4.5c0-2.05-1.37-3.81-3.23-4.34C18.6 6.57 15.63 4 12 4c-3.1 0-5.76 1.95-6.72 4.69C2.3 9.07 0 11.77 0 15c0 3.31 2.69 6 6 6h11.5z"/></svg>
-        </div>
-        <div class="card glass-card interactive-card">
-          <div class="glare-container"><div class="glare"></div></div>
+        <div class="card glass-card">
           <h1 class="card-title">检索你的车牌号</h1>
           
           <div class="platform-toggle" role="radiogroup" aria-label="搜索平台">
@@ -109,13 +103,47 @@
         </div>
       </div>
     </div>
+
+    <!-- Transfer Panel (换乘) — appears after successful search -->
+    <div class="transfer-area" id="transfer-area" style="display: none;">
+      <div class="float-wrapper transfer-float">
+        <div class="card glass-card interactive-card" id="transfer-card">
+          <h2 class="card-title"><i class="fa-solid fa-shuffle"></i> 换乘</h2>
+
+          <div class="transfer-tabs" id="transfer-tabs" role="tablist" aria-label="换乘平台">
+            <!-- Tabs generated dynamically by JS -->
+          </div>
+
+          <div class="transfer-content" id="transfer-content">
+            <div class="transfer-loading fade-element" id="transfer-loading" style="display: none;">
+              <div class="spinner"></div>
+              <p>正在模糊检索...</p>
+            </div>
+
+            <div class="transfer-empty fade-element" id="transfer-empty" style="display: none;">
+              <i class="fa-solid fa-cloud-moon"></i>
+              <p>暂无匹配结果</p>
+            </div>
+
+            <div class="transfer-coming-soon fade-element" id="transfer-coming-soon" style="display: none;">
+              <i class="fa-solid fa-clock"></i>
+              <p>即将支持，敬请期待</p>
+            </div>
+
+            <div class="transfer-results" id="transfer-results">
+              <!-- Results rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer class="footer" role="contentinfo">
     <p><i class="fa-solid fa-heart"></i> Made with love</p>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/node-vibrant/3.1.6/vibrant.min.js"></script>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

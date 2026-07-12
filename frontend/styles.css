@@ -273,6 +273,9 @@ body {
   overflow: hidden;
   position: relative;
   border: 1px solid var(--glass-border);
+  animation: 
+    floatXYLeft 8s ease-in-out infinite,
+    rotateZLeft 13s ease-in-out infinite;
 }
 
 .visual-content.placeholder {
@@ -305,50 +308,14 @@ body {
   }
 }
 
-/* Float wrapper & Cloud Decorations */
+/* Float wrapper */
 .float-wrapper {
   position: relative;
   width: 100%;
   max-width: 450px;
-  animation: floating 6s ease-in-out infinite reverse;
-}
-
-.cloud-decorations {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.deco-cloud {
-  position: absolute;
-  color: rgba(255, 255, 255, 0.8);
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.05));
-  animation: floating 8s ease-in-out infinite;
-}
-
-.dc-1 {
-  width: 120px;
-  top: -40px;
-  right: -50px;
-  animation-delay: 0s;
-}
-
-.dc-2 {
-  width: 180px;
-  bottom: -60px;
-  left: -70px;
-  animation-delay: -2s;
-}
-
-.dc-3 {
-  width: 80px;
-  top: 40%;
-  right: -40px;
-  animation-delay: -4s;
+  animation: 
+    floatXYRight 9s ease-in-out infinite,
+    rotateZRight 11s ease-in-out infinite;
 }
 
 /* ===== Cards ===== */
@@ -367,46 +334,7 @@ body {
   z-index: 1; /* Keep above cloud decorations */
 }
 
-/* Highly optimized hardware-accelerated glare */
-.glare-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-  border-radius: 32px;
-}
-
-.glare {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 255, 255, 0.6) 0%,
-    transparent 25%
-  );
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  will-change: transform, opacity;
-  pointer-events: none;
-}
-
-.card:hover .glare {
-  opacity: 1;
-}
-
-/* Interactive 3D Card */
-.interactive-card {
-  transition: transform 0.1s ease-out;
-  will-change: transform;
-}
-
+/* Content stacking contexts */
 .card-title {
   position: relative;
   z-index: 1; /* Keep above glare */
@@ -635,6 +563,170 @@ body {
   margin-top: 4px;
 }
 
+/* ===== Transfer Panel (换乘) ===== */
+.transfer-area {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  z-index: 3;
+  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (min-width: 1024px) {
+  .transfer-area {
+    flex: 0 0 auto;
+    align-items: center;
+    padding-left: 20px;
+  }
+}
+
+/* Mobile: stack below operation area */
+@media (max-width: 1023px) {
+  .transfer-area {
+    animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    margin-top: 20px;
+  }
+}
+
+.transfer-float {
+  animation:
+    floatXYRight 11s ease-in-out infinite,
+    rotateZRight 14s ease-in-out infinite;
+}
+
+/* Transfer Tabs */
+.transfer-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.transfer-tab {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 8px 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  user-select: none;
+  color: var(--text-dark);
+}
+
+.transfer-tab:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.transfer-tab.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(160, 196, 255, 0.4);
+}
+
+/* Transfer Content Area */
+.transfer-content {
+  min-height: 100px;
+  position: relative;
+}
+
+.transfer-loading,
+.transfer-empty,
+.transfer-coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-light);
+  padding: 20px 0;
+  text-align: center;
+}
+
+.transfer-empty i,
+.transfer-coming-soon i {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+/* Transfer Result Items */
+.transfer-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.transfer-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  text-decoration: none;
+  color: var(--text-dark);
+  transition: all 0.25s ease;
+  animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.transfer-result-item:hover {
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.transfer-result-thumb {
+  width: 48px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.transfer-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.transfer-result-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.transfer-result-arrow {
+  flex-shrink: 0;
+  color: var(--text-light);
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.transfer-result-item:hover .transfer-result-arrow {
+  transform: translateX(4px);
+  color: var(--primary-color);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* ===== Footer ===== */
 .footer {
   position: fixed;
@@ -662,11 +754,23 @@ body {
 
 /* ===== Keyframe Animations ===== */
 
-/* Soft weightless floating */
-@keyframes floating {
-  0%   { transform: translateY(0px) rotate(0deg); }
-  50%  { transform: translateY(-10px) rotate(1deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
+/* Asynchronous multi-directional organic floating */
+@keyframes floatXYLeft {
+  0%, 100% { translate: -4px 6px; }
+  50% { translate: 4px -12px; }
+}
+@keyframes rotateZLeft {
+  0%, 100% { rotate: -1.5deg; }
+  50% { rotate: 1.5deg; }
+}
+
+@keyframes floatXYRight {
+  0%, 100% { translate: 4px 6px; }
+  50% { translate: -4px -10px; }
+}
+@keyframes rotateZRight {
+  0%, 100% { rotate: 1.5deg; }
+  50% { rotate: -1.5deg; }
 }
 
 /* Cover image entrance: fade + slide + scale */

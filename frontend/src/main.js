@@ -1,5 +1,6 @@
 import { fetchAlbumInfo } from './jmcomic.js';
 import { WebGLBackground } from './webgl-background.js';
+import { getTransferTargets } from './transfer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // === DOM References ===
@@ -47,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function fadeOut(el) {
     if (el.style.display === 'none') return;
     el.classList.remove('fade-in');
-    // Set display:none after transition finishes (matches 0.4s CSS duration)
     el._fadeTimer = setTimeout(() => {
       if (!el.classList.contains('fade-in')) {
         el.style.display = 'none';
@@ -115,13 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ============================================
-  //  ColorThief
+  //  Vibrant.js Color Extraction
   // ============================================
-
-  let colorThief = null;
-  if (typeof ColorThief !== 'undefined') {
-    colorThief = new ColorThief();
-  }
 
   const updateVisual = (album) => {
     visualContent.innerHTML = '';
@@ -137,49 +132,48 @@ document.addEventListener('DOMContentLoaded', () => {
     img.alt = album.name;
 
     img.onload = () => {
-      if (colorThief) {
-        try {
-          const color = colorThief.getColor(img);
-          const palette = colorThief.getPalette(img, 3);
+      // Use node-vibrant if available
+      if (typeof Vibrant !== 'undefined') {
+        const vibrant = new Vibrant(img, { quality: 1 });
+        vibrant.getPalette().then(palette => {
+          let c1 = [160, 196, 255]; // fallback
+          let c2 = [255, 198, 255];
+          let c3 = [253, 255, 182];
 
-          // Helper to make extracted colors soft and pastel (mix with warm white)
+          // We prioritize Vibrant and LightVibrant for healing, saturated colors
+          if (palette.Vibrant) c1 = palette.Vibrant.rgb;
+          if (palette.LightVibrant) c2 = palette.LightVibrant.rgb;
+          if (palette.Muted) c3 = palette.Muted.rgb;
+          else if (palette.DarkVibrant) c3 = palette.DarkVibrant.rgb;
+
+          // Helper to ensure colors are soft and macaron-like (mix with warm white)
           const pastelify = (rgb) => [
-            Math.round(rgb[0] * 0.4 + 255 * 0.6),
-            Math.round(rgb[1] * 0.4 + 250 * 0.6),
-            Math.round(rgb[2] * 0.4 + 240 * 0.6)
+            Math.round(rgb[0] * 0.6 + 255 * 0.4),
+            Math.round(rgb[1] * 0.6 + 250 * 0.4),
+            Math.round(rgb[2] * 0.6 + 240 * 0.4)
           ];
 
-          const c1 = color ? pastelify(color) : [160, 196, 255];
-          const c2 = (palette && palette[0]) ? pastelify(palette[0]) : [255, 198, 255];
-          const c3 = (palette && palette[1]) ? pastelify(palette[1]) : [253, 255, 182];
+          c1 = pastelify(c1);
+          c2 = pastelify(c2);
+          c3 = pastelify(c3);
 
           // CSS @property transitions handle smooth interpolation for UI elements
-          document.documentElement.style.setProperty(
-            '--primary-color',
-            `rgb(${c1[0]}, ${c1[1]}, ${c1[2]})`
-          );
-          document.documentElement.style.setProperty(
-            '--secondary-color',
-            `rgb(${c2[0]}, ${c2[1]}, ${c2[2]})`
-          );
-          document.documentElement.style.setProperty(
-            '--accent-color',
-            `rgb(${c3[0]}, ${c3[1]}, ${c3[2]})`
-          );
+          document.documentElement.style.setProperty('--primary-color', `rgb(${c1[0]}, ${c1[1]}, ${c1[2]})`);
+          document.documentElement.style.setProperty('--secondary-color', `rgb(${c2[0]}, ${c2[1]}, ${c2[2]})`);
+          document.documentElement.style.setProperty('--accent-color', `rgb(${c3[0]}, ${c3[1]}, ${c3[2]})`);
 
           // WebGL background uses internal lerp for smooth shader color transition
           if (webglBg) {
             webglBg.setColors(c1, c2, c3);
           }
-        } catch (e) {
-          console.log('Could not extract color (likely CORS issue on image)', e);
-        }
+        }).catch(err => {
+          console.log('Vibrant extraction failed:', err);
+        });
       }
     };
 
     img.onerror = () => {
-      visualContent.innerHTML =
-        '<span><i class="fa-solid fa-image-slash"></i> 暂无封面</span>';
+      visualContent.innerHTML = '<span><i class="fa-solid fa-image-slash"></i> 暂无封面</span>';
       visualContent.classList.add('placeholder');
       // Reset colors to defaults
       document.documentElement.style.removeProperty('--primary-color');
@@ -237,6 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 180);
 
       updateVisual(album);
+
+      // Trigger transfer panel search
+      const currentPlatform = document.querySelector('input[name="platform"]:checked')?.value || 'jm';
+      triggerTransfer(album.name || '', currentPlatform);
     } catch (err) {
       fadeOut(loadingIndicator);
       setTimeout(() => {
@@ -259,6 +257,161 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ============================================
+  //  Transfer Panel (换乘)
+  // ============================================
+
+  const transferArea = document.getElementById('transfer-area');
+  const transferTabs = document.getElementById('transfer-tabs');
+  const transferResults = document.getElementById('transfer-results');
+  const transferLoading = document.getElementById('transfer-loading');
+  const transferEmpty = document.getElementById('transfer-empty');
+  const transferComingSoon = document.getElementById('transfer-coming-soon');
+  const transferCard = document.getElementById('transfer-card');
+
+  let transferTargets = [];
+  let activeTransferTab = null;
+  // Cache: { tabId: results[] }
+  let transferCache = {};
+
+  async function triggerTransfer(comicTitle, sourcePlatform) {
+    transferTargets = getTransferTargets(sourcePlatform);
+    transferCache = {};
+    activeTransferTab = null;
+
+    if (transferTargets.length === 0) {
+      transferArea.style.display = 'none';
+      return;
+    }
+
+    // Build tabs
+    transferTabs.innerHTML = '';
+    transferTargets.forEach((target, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'transfer-tab' + (idx === 0 ? ' active' : '');
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
+      btn.innerHTML = `<i class="${target.icon}"></i> ${target.label}`;
+      btn.addEventListener('click', () => switchTransferTab(target.id, comicTitle));
+      transferTabs.appendChild(btn);
+    });
+
+    // Show the panel
+    transferArea.style.display = 'flex';
+
+    // Bind 3D tilt to the transfer card
+    bindTilt(transferCard);
+
+    // Auto-select first tab
+    switchTransferTab(transferTargets[0].id, comicTitle);
+  }
+
+  async function switchTransferTab(tabId, comicTitle) {
+    if (activeTransferTab === tabId) return;
+    activeTransferTab = tabId;
+
+    // Update tab active state
+    transferTabs.querySelectorAll('.transfer-tab').forEach((btn, idx) => {
+      const isActive = transferTargets[idx].id === tabId;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    const target = transferTargets.find(t => t.id === tabId);
+    if (!target) return;
+
+    // Check if this is the placeholder (picacg)
+    if (tabId === 'picacg') {
+      hideAllTransferStates();
+      fadeIn(transferComingSoon, 'flex');
+      return;
+    }
+
+    // Check cache
+    if (transferCache[tabId]) {
+      renderTransferResults(transferCache[tabId], tabId);
+      return;
+    }
+
+    // Show loading
+    hideAllTransferStates();
+    fadeIn(transferLoading, 'flex');
+
+    try {
+      const results = await target.searchFn(comicTitle);
+      transferCache[tabId] = results;
+
+      // Only render if this tab is still active
+      if (activeTransferTab === tabId) {
+        fadeOut(transferLoading);
+        setTimeout(() => {
+          renderTransferResults(results, tabId);
+        }, 180);
+      }
+    } catch (err) {
+      console.warn('Transfer search error:', err);
+      if (activeTransferTab === tabId) {
+        fadeOut(transferLoading);
+        setTimeout(() => {
+          hideAllTransferStates();
+          fadeIn(transferEmpty, 'flex');
+        }, 180);
+      }
+    }
+  }
+
+  function hideAllTransferStates() {
+    fadeOut(transferLoading);
+    fadeOut(transferEmpty);
+    fadeOut(transferComingSoon);
+    transferResults.innerHTML = '';
+  }
+
+  function renderTransferResults(results, tabId) {
+    hideAllTransferStates();
+    transferResults.innerHTML = '';
+
+    if (!results || results.length === 0) {
+      fadeIn(transferEmpty, 'flex');
+      return;
+    }
+
+    results.forEach((item, index) => {
+      const a = document.createElement('a');
+      a.className = 'transfer-result-item';
+      a.href = item.url || '#';
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.style.animationDelay = `${index * 0.06}s`;
+
+      // Thumbnail (if available)
+      if (item.thumbnail) {
+        const thumb = document.createElement('img');
+        thumb.className = 'transfer-result-thumb';
+        thumb.src = item.thumbnail;
+        thumb.alt = '';
+        thumb.loading = 'lazy';
+        a.appendChild(thumb);
+      }
+
+      // Info
+      const info = document.createElement('div');
+      info.className = 'transfer-result-info';
+      const title = document.createElement('div');
+      title.className = 'transfer-result-title';
+      title.textContent = item.title || item.name || 'Untitled';
+      info.appendChild(title);
+      a.appendChild(info);
+
+      // Arrow
+      const arrow = document.createElement('i');
+      arrow.className = 'fa-solid fa-chevron-right transfer-result-arrow';
+      a.appendChild(arrow);
+
+      transferResults.appendChild(a);
+    });
+  }
+
+  // ============================================
   //  Jelly Bounce on All Buttons
   // ============================================
 
@@ -278,33 +431,32 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ============================================
-  //  Smooth Hover Glare Effect (Hardware Accelerated)
+  //  3D Tilt Helper (reusable)
   // ============================================
 
-  const interactiveCards = document.querySelectorAll('.interactive-card');
-  interactiveCards.forEach((card) => {
-    const glare = card.querySelector('.glare');
-    if (!glare) return;
+  function bindTilt(card) {
+    if (!card || card._tiltBound) return;
+    card._tiltBound = true;
 
     card.addEventListener('mousemove', (e) => {
       const rect = card.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-
-      // Translate the glare. The glare is 200% width/height and centered at -50% -50%.
-      // We want its center to follow the mouse.
-      const translateX = x - rect.width / 2;
-      const translateY = y - rect.height / 2;
-
-      // Use requestAnimationFrame for buttery smooth 60fps tracking without layout thrashing
-      requestAnimationFrame(() => {
-        glare.style.transform = `translate(${translateX}px, ${translateY}px)`;
-      });
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = ((y - centerY) / centerY) * -8;
+      const rotateY = ((x - centerX) / centerX) * 8;
+      card.style.transition = 'transform 0.08s ease-out';
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
     });
 
     card.addEventListener('mouseleave', () => {
-      // Glare opacity fade out is handled purely by CSS :hover
-      // No need to reset position, it just fades out.
+      card.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
     });
-  });
+  }
+
+  // Bind tilt to all existing interactive cards
+  document.querySelectorAll('.interactive-card').forEach(bindTilt);
+
 });
