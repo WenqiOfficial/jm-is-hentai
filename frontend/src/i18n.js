@@ -95,6 +95,7 @@ export function t(key) {
  * Uses text-node replacement to preserve child elements (e.g. <i> icons).
  */
 export function applyTranslations() {
+  document.documentElement.lang = currentLang;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     const translated = t(key);

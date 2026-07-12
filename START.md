@@ -1,6 +1,4 @@
-# JMComic 工具网站项目
-
-Hentai车站 — 神秘数字转换器
+# Hentai车站
 
 ## 项目概述
 

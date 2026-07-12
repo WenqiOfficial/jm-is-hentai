@@ -3,6 +3,7 @@ import { WebGLBackground } from './webgl-background.js';
 import { getTransferTargets, searchEhentai, fetchEhentaiGallery } from './transfer.js';
 import { initI18n, t, getCurrentLang } from './i18n.js';
 import { translateTag, checkAndUpdateTags } from './tag-translator.js';
+import { initLogoInteractivity } from './logo.js';
 import no18Icon from '../image/no18.png';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -501,6 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const transferResults = document.getElementById('transfer-results');
   const transferLoading = document.getElementById('transfer-loading');
   const transferEmpty = document.getElementById('transfer-empty');
+  const transferError = document.getElementById('transfer-error');
+  const transferErrorMsg = document.getElementById('transfer-error-msg');
   const transferComingSoon = document.getElementById('transfer-coming-soon');
   const transferCard = document.getElementById('transfer-card');
   const transferKeywordInput = document.getElementById('transfer-keyword-input');
@@ -618,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const target = transferTargets.find(t => t.id === tabId);
     if (!target) return;
 
-    const ALL_STATES = [transferLoading, transferEmpty, transferComingSoon, transferResults];
+    const ALL_STATES = [transferLoading, transferEmpty, transferError, transferComingSoon, transferResults];
 
     // Check if this is the placeholder (picacg)
     if (tabId === 'picacg') {
@@ -648,6 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await smoothStateSwitch(transferContent, ALL_STATES, transferLoading, 'flex');
 
       let found = false;
+      let lastErrorStr = null;
       try {
         const results = await target.searchFn(comicTitle);
         transferCache[cacheKey] = results;
@@ -661,13 +665,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (err) {
         console.warn('Transfer search error:', err);
+        lastErrorStr = err.message || String(err);
       }
 
       // If we reach here, the search returned 0 results or errored
       if (i < candidates.length - 1) {
         // We have more candidates to try, show a brief message before continuing
-        transferEmpty.querySelector('p').textContent = t('alert.auto_empty');
-        await smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
+        if (lastErrorStr) {
+          transferErrorMsg.textContent = lastErrorStr;
+          await smoothStateSwitch(transferContent, ALL_STATES, transferError, 'flex');
+        } else {
+          transferEmpty.querySelector('p').textContent = t('alert.auto_empty');
+          await smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
+        }
         
         if (activeTransferTab !== tabId) return;
         
@@ -675,18 +685,25 @@ document.addEventListener('DOMContentLoaded', () => {
         await new Promise(r => setTimeout(r, 1200));
         
         if (activeTransferTab !== tabId) return;
+      } else {
+        // Last iteration
+        if (lastErrorStr) {
+          transferErrorMsg.textContent = lastErrorStr;
+          await smoothStateSwitch(transferContent, ALL_STATES, transferError, 'flex');
+          return; // Prevent showing empty
+        }
       }
     }
     
-    // If all candidates failed or returned 0 results
+    // If all candidates failed or returned 0 results (and no error on the last candidate)
     if (activeTransferTab === tabId) {
       transferEmpty.querySelector('p').textContent = t('transfer.empty');
-      await smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
+      smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
     }
   }
 
   async function renderTransferResults(results, tabId) {
-    const ALL_STATES = [transferLoading, transferEmpty, transferComingSoon, transferResults];
+    const ALL_STATES = [transferLoading, transferEmpty, transferError, transferComingSoon, transferResults];
     
     // If switching between cached result lists in the same container, fade out first
     if (transferResults.style.display !== 'none' && transferResults.classList.contains('fade-in')) {
@@ -803,4 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
       checkAndUpdateTags(true);
     });
   }
+
+  // Initialize interactive logo
+  initLogoInteractivity();
 });

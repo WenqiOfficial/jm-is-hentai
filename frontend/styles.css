@@ -1,5 +1,5 @@
 /* ============================================
-   神秘数字转换器 — Complete Style System
+   Hentai车站 — Complete Style System
    ============================================ */
 
 /* === Register CSS Custom Properties for smooth transitions === */
@@ -42,11 +42,13 @@
 }
 
 body {
-  font-family: 'Varela Round', system-ui, sans-serif;
+  font-family: 'Fredoka', 'KeinannMaruPOP', 'KingnamMaruPop', '荆南圆体', 'M PLUS Rounded 1c', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-weight: bold;
   color: var(--text-dark);
   background-color: var(--bg-color);
   min-height: 100vh;
   overflow-x: hidden;
+  user-select: none; /* Prevent accidental text selection during drag */
 }
 
 /* ===== Background ===== */
@@ -134,11 +136,56 @@ body {
 }
 
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 24px;
   font-weight: bold;
   color: var(--text-dark);
   text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
-  animation: floating 4s ease-in-out infinite;
+  cursor: grab;
+  touch-action: none; /* Prevent scrolling when dragging logo */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.logo:active {
+  cursor: grabbing;
+}
+
+.logo-text-gradient {
+  display: flex;
+  align-items: center;
+}
+
+.logo-letter, .logo-img {
+  position: relative;
+  will-change: transform;
+  user-select: none;
+  cursor: grab;
+}
+
+.logo-letter:active, .logo-img:active {
+  cursor: grabbing;
+}
+
+/* Gradient is applied to EACH letter to avoid clipping issues when moving out of container */
+.logo-letter {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
+  background-size: 250px 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(2px 2px 2px rgba(255, 255, 255, 0.4));
+}
+
+.logo-img {
+  height: 1.2em;
+  width: auto;
+  object-fit: contain;
+  margin-right: 4px;
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
 /* ===== Menu Toggle ===== */
@@ -260,7 +307,8 @@ body {
 }
 
 .toggle-label:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
 }
 
 /* ===== Layout ===== */
@@ -372,7 +420,7 @@ body {
 .nsfw-text {
   color: white;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: bold;
   text-shadow: 0 2px 6px rgba(0,0,0,0.8);
   letter-spacing: 0.5px;
 }
@@ -430,8 +478,8 @@ body {
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
   padding: 40px;
-  width: 100%;
-  max-width: 450px;
+  /* width: 100%; */
+  width: 450px;
   border-radius: 32px; /* Clean rounded card instead of egg */
   overflow: hidden; /* Contain glare */
   z-index: 1; /* Keep above cloud decorations */
@@ -475,10 +523,12 @@ body {
   gap: 6px;
   user-select: none;
   color: var(--text-dark);
+  transition: all 0.2s ease;
 }
 
 .platform-btn:hover, .transfer-tab:hover {
   background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
 }
 
 .platform-btn.active, .transfer-tab.active {
@@ -518,6 +568,11 @@ body {
   outline: none;
   transition: all 0.3s ease;
   font-family: inherit;
+}
+
+.rounded-input:hover {
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .rounded-input:focus {
@@ -797,7 +852,7 @@ body {
 
 .transfer-result-title {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: bold;
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -830,7 +885,7 @@ body {
   font-size: 13px;
   color: var(--text-light);
   z-index: 5;
-  font-family: 'Varela Round', sans-serif;
+  font-family: inherit;
   font-weight: bold;
   min-height: 56px;
   display: flex;
