@@ -125,6 +125,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   user-select: none; /* Prevent accidental text selection during drag */
+  -webkit-user-select: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -918,6 +919,8 @@ body.mask-active .menu-toggle {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  user-select: text; /* Allow text selection for comic info */
+  -webkit-user-select: text;
 }
 
 .comic-title {
