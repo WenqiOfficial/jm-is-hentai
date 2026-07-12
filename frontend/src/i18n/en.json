@@ -34,5 +34,8 @@
   "toast.update_success": "Tag library updated successfully",
   "toast.update_fail": "Update failed",
   "footer.made_with_love": "Made with love❤️",
-  "footer.no_tracking": "This site does not provide or store any information, all content is provided by third-party websites"
+  "footer.no_tracking": "This site does not provide or store any information, all content is provided by third-party websites",
+  "settings.auto_blur": "Auto-blur NSFW covers",
+  "nsfw.risky": "Potential risky content",
+  "nsfw.view": "View Image"
 }

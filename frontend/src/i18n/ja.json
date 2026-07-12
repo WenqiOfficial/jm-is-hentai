@@ -34,5 +34,8 @@
   "toast.update_success": "更新に成功しました",
   "toast.update_fail": "更新に失敗しました",
   "footer.made_with_love": "Made with love❤️",
-  "footer.no_tracking": "当サイトはいかなる情報も提供および保存しません。すべてのコンテンツは他のウェブサイトから提供されています"
+  "footer.no_tracking": "当サイトはいかなる情報も提供および保存しません。すべてのコンテンツは他のウェブサイトから提供されています",
+  "settings.auto_blur": "NSFWカバーを自動ぼかし",
+  "nsfw.risky": "潜在的なリスクコンテンツ",
+  "nsfw.view": "画像を表示"
 }

@@ -4,12 +4,12 @@
   "settings.ds_api": "后端 API 代理 (推荐)",
   "settings.ds_frontend": "前端直连 (省流/需跨域)",
   "settings.language": "语言设置",
-  "settings.lang_auto": "自动探测 (Auto)",
+  "settings.lang_auto": "自动检测",
   "visual.waiting": "等待检索...",
   "search.title": "检索你的车牌号",
-  "platform.jm": "禁漫",
-  "search.input_jm": "输入 JMComic 编号...",
-  "search.input_eh": "输入 E-Hentai 检索词...",
+  "platform.jm": "禁漫天堂",
+  "search.input_jm": "输入神秘车牌号...",
+  "search.input_eh": "输入检索词...",
   "search.button": "检索",
   "search.loading": "正在云端寻找...",
   "comic.read_jm": "前往 JMComic",
@@ -34,5 +34,8 @@
   "toast.update_success": "标签翻译库更新成功",
   "toast.update_fail": "更新失败",
   "footer.made_with_love": "Made with love❤️",
-  "footer.no_tracking": "本网站不提供也不存储任何信息，内容均由其余网站提供"
+  "footer.no_tracking": "本网站不提供也不存储任何信息，内容均由其余网站提供",
+  "settings.auto_blur": "自动模糊 NSFW 封面",
+  "nsfw.risky": "潜在的风险内容",
+  "nsfw.view": "查看图片"
 }

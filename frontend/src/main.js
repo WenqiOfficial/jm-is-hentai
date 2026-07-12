@@ -20,6 +20,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const comicTags = document.getElementById('comic-tags');
   const jmLink = document.getElementById('jm-link');
 
+  // === State Management for Reactive Re-rendering ===
+  let currentAlbumData = null;
+  let currentPlatformState = null;
+
+  window.addEventListener('languageChanged', (e) => {
+    // Only update if a comic is currently being viewed
+    if (!currentAlbumData || comicInfo.style.display === 'none') return;
+    const lang = e.detail.lang;
+    
+    // Update Author/Uploader text and Read button
+    if (currentPlatformState === 'jm') {
+      comicAuthor.textContent = `${t('comic.author')}: ${(currentAlbumData.author || []).join(', ') || '未知'}`;
+      jmLink.innerHTML = `<i class="fa-solid fa-book-open"></i> ${t('comic.read_jm')}`;
+    } else if (currentPlatformState === 'eh') {
+      comicAuthor.textContent = currentAlbumData.uploader ? `${t('comic.uploader')}: ${currentAlbumData.uploader}` : `${t('comic.source')}: E-Hentai`;
+      jmLink.innerHTML = `<i class="fa-solid fa-paw"></i> ${t('comic.read_eh')}`;
+    }
+
+    // Update tags
+    const tags = currentAlbumData.tags || [];
+    comicTags.innerHTML = '';
+    tags.forEach((tag) => {
+      const span = document.createElement('span');
+      span.className = 'tag';
+      span.textContent = translateTag(tag, lang);
+      if (lang === 'zh') span.title = tag; 
+      // Omit entrance animation during language switch to avoid visual jarring
+      comicTags.appendChild(span);
+    });
+  });
+
   // ============================================
   //  Fade Transition Helpers
   //  Replaces hard display:none switching with
@@ -159,6 +190,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const nsfwBlurToggle = document.getElementById('nsfw-blur-toggle');
+  let autoBlurNsfw = localStorage.getItem('auto_blur_nsfw') !== 'false'; // default true
+  if (nsfwBlurToggle) {
+    nsfwBlurToggle.checked = autoBlurNsfw;
+    nsfwBlurToggle.addEventListener('change', (e) => {
+      autoBlurNsfw = e.target.checked;
+      localStorage.setItem('auto_blur_nsfw', autoBlurNsfw);
+    });
+  }
+
   // Toggle with smooth CSS transition (opacity/visibility/transform)
   settingsBtn.addEventListener('click', () => {
     const isHidden = settingsPanel.classList.contains('is-hidden');
@@ -223,6 +264,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     visualContent.appendChild(displayImg);
 
+    // --- Auto-blur NSFW logic ---
+    if (autoBlurNsfw) {
+      let isNsfw = false;
+      const tags = album.tags || [];
+      if (album._source_domain === 'eh') {
+        const cat = album.category || '';
+        isNsfw = cat.toLowerCase() !== 'non-h';
+      } else {
+        isNsfw = !tags.includes('非工口') && !tags.includes('non-h');
+      }
+
+      if (isNsfw) {
+        displayImg.classList.add('nsfw-blurred');
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'nsfw-overlay';
+        
+        const icon = document.createElement('img');
+        icon.src = './image/no18.png';
+        icon.className = 'nsfw-icon';
+        icon.alt = '18+';
+        
+        const text = document.createElement('div');
+        text.className = 'nsfw-text';
+        text.textContent = t('nsfw.risky');
+        text.setAttribute('data-i18n', 'nsfw.risky');
+        
+        const btn = document.createElement('button');
+        btn.className = 'nsfw-btn';
+        btn.textContent = t('nsfw.view');
+        btn.setAttribute('data-i18n', 'nsfw.view');
+        
+        btn.onclick = () => {
+          displayImg.classList.remove('nsfw-blurred');
+          overlay.classList.add('hidden');
+        };
+        
+        overlay.appendChild(icon);
+        overlay.appendChild(text);
+        overlay.appendChild(btn);
+        
+        visualContent.appendChild(overlay);
+      }
+    }
     // 2. Hidden Proxy Image (CORS enabled, used ONLY for Vibrant.js color extraction)
     if (typeof Vibrant !== 'undefined') {
       const proxyImg = new Image();
@@ -298,6 +383,10 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (currentPlatform === 'jm') {
         const album = await fetchAlbumInfo(query, fetchMode);
+        
+        // Save state for reactive i18n updates
+        currentAlbumData = album;
+        currentPlatformState = 'jm';
 
         // Smoothly transition from loading to comic info
         smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, errorMsg], comicInfo, 'flex');
@@ -338,6 +427,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const galleryDetails = await fetchEhentaiGallery(baseAlbum.gid, baseAlbum.token);
         const album = galleryDetails || baseAlbum; // Fallback to base album if detail fetch fails
         const tags = album.tags || [];
+
+        // Save state for reactive i18n updates
+        currentAlbumData = { ...album, tags: tags };
+        currentPlatformState = 'eh';
 
         // Smoothly transition from loading to comic info
         smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, errorMsg], comicInfo, 'flex');
