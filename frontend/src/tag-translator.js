@@ -3,17 +3,18 @@ import { t } from './i18n.js';
 
 const DB_URL = 'https://cdn.jsdelivr.net/gh/EhTagTranslation/DatabaseReleases/db.text.json';
 const GITHUB_API = 'https://api.github.com/repos/EhTagTranslation/Database/releases/latest';
-const CACHE_VERSION_KEY = 'ehtt_version';
 
 // In-memory flattened cache: {'artist:mizuryu kei': '水龙敬'}
 let tagCache = null; 
 let isDownloading = false;
 let t2sConverter = null;
+let dbInstance = null;
 
 /**
- * Open or create IndexedDB
+ * Get or create singleton IndexedDB connection.
  */
-function openDB() {
+function getDB() {
+  if (dbInstance) return Promise.resolve(dbInstance);
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('EhTagDB', 1);
     request.onupgradeneeded = (e) => {
@@ -22,16 +23,16 @@ function openDB() {
         db.createObjectStore('tags');
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      dbInstance = request.result;
+      resolve(dbInstance);
+    };
     request.onerror = () => reject(request.error);
   });
 }
 
-/**
- * Get item from IndexedDB
- */
 async function getDBItem(key) {
-  const db = await openDB();
+  const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('tags', 'readonly');
     const store = tx.objectStore('tags');
@@ -41,11 +42,8 @@ async function getDBItem(key) {
   });
 }
 
-/**
- * Set item in IndexedDB
- */
 async function setDBItem(key, value) {
-  const db = await openDB();
+  const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('tags', 'readwrite');
     const store = tx.objectStore('tags');
@@ -53,6 +51,23 @@ async function setDBItem(key, value) {
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
+}
+
+/**
+ * Get or lazily initialize the OpenCC Traditional-to-Simplified converter.
+ * Extracted to eliminate duplicated initialization logic.
+ * @returns {Function|null}
+ */
+function getT2SConverter() {
+  if (t2sConverter) return t2sConverter;
+  if (!window.OpenCC) return null;
+  try {
+    t2sConverter = window.OpenCC.Converter({ from: 'tw', to: 'cn' });
+    return t2sConverter;
+  } catch (e) {
+    console.warn('OpenCC converter init failed:', e);
+    return null;
+  }
 }
 
 /**
@@ -214,14 +229,10 @@ export function translateTag(tag, lang) {
     }
     
     // Attempt Traditional to Simplified conversion for lookup
-    if (window.OpenCC && tagCache.zh2en) {
-      if (!t2sConverter) {
-        try { t2sConverter = window.OpenCC.Converter({ from: 'tw', to: 'cn' }); } catch (e) {}
-      }
-      if (t2sConverter) {
-        const simplifiedTag = t2sConverter(tag.trim());
-        if (tagCache.zh2en[simplifiedTag]) return tag.trim();
-      }
+    const converter = getT2SConverter();
+    if (converter && tagCache.zh2en) {
+      const simplifiedTag = converter(tag.trim());
+      if (tagCache.zh2en[simplifiedTag]) return tag.trim();
     }
     
     return bareTag;
@@ -232,14 +243,10 @@ export function translateTag(tag, lang) {
       if (dict[tag.trim()]) return dict[tag.trim()];
       
       // Attempt Traditional to Simplified conversion for lookup
-      if (window.OpenCC) {
-        if (!t2sConverter) {
-          try { t2sConverter = window.OpenCC.Converter({ from: 'tw', to: 'cn' }); } catch (e) {}
-        }
-        if (t2sConverter) {
-          const simplifiedTag = t2sConverter(tag.trim());
-          if (dict[simplifiedTag]) return dict[simplifiedTag];
-        }
+      const converter = getT2SConverter();
+      if (converter) {
+        const simplifiedTag = converter(tag.trim());
+        if (dict[simplifiedTag]) return dict[simplifiedTag];
       }
     }
     // If it's already English (exists in en2zh keys), return stripped

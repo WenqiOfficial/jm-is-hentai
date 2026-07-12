@@ -25,31 +25,72 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentAlbumData = null;
   let currentPlatformState = null;
 
-  window.addEventListener('languageChanged', (e) => {
-    // Only update if a comic is currently being viewed
-    if (!currentAlbumData || comicInfo.style.display === 'none') return;
-    const lang = e.detail.lang;
-    
-    // Update Author/Uploader text and Read button
-    if (currentPlatformState === 'jm') {
-      comicAuthor.textContent = `${t('comic.author')}: ${(currentAlbumData.author || []).join(', ') || '未知'}`;
-      jmLink.innerHTML = `<i class="fa-solid fa-book-open"></i> ${t('comic.read_jm')}`;
-    } else if (currentPlatformState === 'eh') {
-      comicAuthor.textContent = currentAlbumData.uploader ? `${t('comic.uploader')}: ${currentAlbumData.uploader}` : `${t('comic.source')}: E-Hentai`;
-      jmLink.innerHTML = `<i class="fa-solid fa-paw"></i> ${t('comic.read_eh')}`;
-    }
+  // ============================================
+  //  Shared UI Helpers (DRY)
+  // ============================================
 
-    // Update tags
-    const tags = currentAlbumData.tags || [];
+  /**
+   * Render tag cloud. Extracted to eliminate 3x duplication.
+   * @param {string[]} tags - Raw tag strings
+   * @param {string} lang - Current language code
+   * @param {boolean} animate - Whether to apply stagger entrance animation
+   */
+  function renderTags(tags, lang, animate = true) {
     comicTags.innerHTML = '';
-    tags.forEach((tag) => {
+    (tags || []).forEach((tag, index) => {
       const span = document.createElement('span');
       span.className = 'tag';
       span.textContent = translateTag(tag, lang);
-      if (lang === 'zh') span.title = tag; 
-      // Omit entrance animation during language switch to avoid visual jarring
+      if (lang === 'zh') span.title = tag;
+      if (animate) {
+        span.style.animation = `tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both`;
+      }
       comicTags.appendChild(span);
     });
+  }
+
+  /** Platform-specific display configuration */
+  const PLATFORM_CONFIG = {
+    jm: {
+      getAuthor: (album) => `${t('comic.author')}: ${(album.author || []).join(', ') || t('comic.unknown', '未知')}`,
+      getTitle: (album, query) => album.name || `JMComic - ${query}`,
+      getLinkIcon: 'fa-solid fa-book-open',
+      getLinkText: () => t('comic.read_jm'),
+    },
+    eh: {
+      getAuthor: (album) => album.uploader ? `${t('comic.uploader')}: ${album.uploader}` : `${t('comic.source')}: E-Hentai`,
+      getTitle: (album, query) => album.title_jpn || album.title || query,
+      getLinkIcon: 'fa-solid fa-paw',
+      getLinkText: () => t('comic.read_eh'),
+    },
+  };
+
+  /**
+   * Populate the comic info panel. Extracted to eliminate 2x duplication.
+   * @param {string} platform - 'jm' or 'eh'
+   * @param {Object} album - Album data object
+   * @param {string} linkHref - URL for the read button
+   * @param {string} query - Original search query (for title fallback)
+   */
+  function populateComicInfo(platform, album, linkHref, query) {
+    const config = PLATFORM_CONFIG[platform];
+    const lang = getCurrentLang();
+
+    comicTitle.textContent = config.getTitle(album, query);
+    comicAuthor.textContent = config.getAuthor(album);
+    renderTags(album.tags || [], lang, true);
+    jmLink.href = linkHref;
+    jmLink.innerHTML = `<i class="${config.getLinkIcon}"></i> ${config.getLinkText()}`;
+  }
+
+  window.addEventListener('languageChanged', (e) => {
+    if (!currentAlbumData || comicInfo.style.display === 'none') return;
+    const config = PLATFORM_CONFIG[currentPlatformState];
+    if (!config) return;
+
+    comicAuthor.textContent = config.getAuthor(currentAlbumData);
+    jmLink.innerHTML = `<i class="${config.getLinkIcon}"></i> ${config.getLinkText()}`;
+    renderTags(currentAlbumData.tags || [], e.detail.lang, false);
   });
 
   // ============================================
@@ -83,11 +124,18 @@ document.addEventListener('DOMContentLoaded', () => {
   function fadeOut(el) {
     if (el.style.display === 'none') return;
     el.classList.remove('fade-in');
-    el._fadeTimer = setTimeout(() => {
+
+    // Use transitionend to sync with CSS instead of hardcoded timeout
+    const onEnd = () => {
+      el.removeEventListener('transitionend', onEnd);
       if (!el.classList.contains('fade-in')) {
         el.style.display = 'none';
       }
-    }, 450);
+    };
+    el.addEventListener('transitionend', onEnd, { once: true });
+
+    // Safety fallback in case transitionend never fires (e.g., display:none race)
+    el._fadeTimer = setTimeout(onEnd, 500);
   }
 
   /**
@@ -148,12 +196,16 @@ document.addEventListener('DOMContentLoaded', () => {
       incomingElement.classList.add('fade-in');
     }
 
-    // 5. Cleanup after transition completes
-    setTimeout(() => {
+    // 5. Cleanup after transition completes (use transitionend with safety fallback)
+    const cleanup = () => {
       container.style.height = '';
       container.style.overflow = '';
       container.style.transition = '';
-    }, 400);
+    };
+    container.addEventListener('transitionend', (e) => {
+      if (e.propertyName === 'height') cleanup();
+    }, { once: true });
+    setTimeout(cleanup, 500); // Safety fallback
   }
 
   // ============================================
@@ -252,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (displayImg.src !== proxyImgUrl) {
         displayImg.src = proxyImgUrl;
       } else {
-        visualContent.innerHTML = '<span><i class="fa-solid fa-image-slash"></i> 暂无封面</span>';
+        visualContent.innerHTML = `<span><i class="fa-solid fa-image-slash"></i> ${t('comic.no_cover')}</span>`;
         visualContent.classList.add('placeholder');
         // Reset colors to defaults
         document.documentElement.style.removeProperty('--primary-color');
@@ -384,36 +436,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (currentPlatform === 'jm') {
         const album = await fetchAlbumInfo(query, fetchMode);
-        
-        // Save state for reactive i18n updates
+
         currentAlbumData = album;
         currentPlatformState = 'jm';
 
-        // Smoothly transition from loading to comic info
         smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, errorMsg], comicInfo, 'flex');
-
-        // Populate comic info
-        comicTitle.textContent = album.name || `JMComic - ${query}`;
-        comicAuthor.textContent = `${t('comic.author')}: ${(album.author || []).join(', ') || '未知'}`;
-
-        // Tags with stagger pop animation
-        comicTags.innerHTML = '';
-        const currentLang = getCurrentLang();
-        (album.tags || []).forEach((tag, index) => {
-          const span = document.createElement('span');
-          span.className = 'tag';
-          span.textContent = translateTag(tag, currentLang);
-          if (currentLang === 'zh') span.title = tag; // Show original on hover
-          span.style.animation = `tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both`;
-          comicTags.appendChild(span);
-        });
-
-        jmLink.href = `https://18comic.vip/album/${query}`;
-        jmLink.innerHTML = `<i class="fa-solid fa-book-open"></i> ${t('comic.read_jm')}`;
-
+        populateComicInfo('jm', album, `https://18comic.vip/album/${query}`, query);
         updateVisual(album);
-
-        // Trigger transfer panel search
         triggerTransfer(album.name || '', currentPlatform);
 
       } else if (currentPlatform === 'eh') {
@@ -423,39 +452,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const baseAlbum = results[0];
-        
-        // Fetch rich metadata using the new E-Hentai gdata API
         const galleryDetails = await fetchEhentaiGallery(baseAlbum.gid, baseAlbum.token);
-        const album = galleryDetails || baseAlbum; // Fallback to base album if detail fetch fails
+        const album = galleryDetails || baseAlbum;
         const tags = album.tags || [];
 
-        // Save state for reactive i18n updates
-        currentAlbumData = { ...album, tags: tags };
+        currentAlbumData = { ...album, tags };
         currentPlatformState = 'eh';
 
-        // Smoothly transition from loading to comic info
         smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, errorMsg], comicInfo, 'flex');
-
-        const currentLang = getCurrentLang();
-        
-        // Extract title (English title is usually title, JPN title is title_jpn if exists)
-        comicTitle.textContent = album.title_jpn || album.title || baseAlbum.title || query;
-        comicAuthor.textContent = album.uploader ? `${t('comic.uploader')}: ${album.uploader}` : `${t('comic.source')}: E-Hentai`;
-        
-        // Tags with stagger pop animation
-        comicTags.innerHTML = '';
-        tags.forEach((tag, index) => {
-          const span = document.createElement('span');
-          span.className = 'tag';
-          // E-Hentai tags often have a namespace prefix like 'artist:xxx'
-          span.textContent = translateTag(tag, currentLang);
-          if (currentLang === 'zh') span.title = tag; // Show original on hover
-          span.style.animation = `tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both`;
-          comicTags.appendChild(span);
-        });
-
-        jmLink.href = baseAlbum.url || '#';
-        jmLink.innerHTML = `<i class="fa-solid fa-paw"></i> ${t('comic.read_eh')}`;
+        populateComicInfo('eh', { ...album, tags }, baseAlbum.url || '#', query);
 
         updateVisual({
           id: query,
@@ -463,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
           _source_domain: 'eh',
           _thumbnail: album.thumb || baseAlbum.thumbnail,
           category: album.category,
-          tags: tags
+          tags,
         });
 
         triggerTransfer(baseAlbum.title || query, currentPlatform);

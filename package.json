@@ -1,17 +1,16 @@
 {
   "name": "jm-is-hentai",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A proxy converter connecting JMComic IDs with other galleries",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["jmcomic", "e-hentai", "proxy", "converter"],
+  "author": "OrPudding",
+  "license": "MIT",
   "dependencies": {
     "crypto-js": "^4.2.0"
   },

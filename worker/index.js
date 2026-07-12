@@ -1,8 +1,10 @@
-import CryptoJS from 'crypto-js';
+import {
+  FALLBACK_API_SOURCES,
+  getTokenWithTokenparam,
+  decodeDataText,
+  decodeJsonData,
+} from '../shared/crypto.js';
 
-const APP_TOKEN_SECRET = "18comicAPP";
-const APP_DATA_SECRET = "185Hcomic3PAPP7R";
-const APP_VERSION = "1.8.0";
 const API_DOMAIN_SERVER_SECRET = "diosfjckwpqpdfjkvnqQjsik";
 
 const API_DOMAIN_SERVER_URLS = [
@@ -11,37 +13,6 @@ const API_DOMAIN_SERVER_URLS = [
   "https://rup4a04-c03.tos-cn-beijing.bytepluses.com.cn/newsvr-2025.txt",
   "https://jmappc01-1308024008.cos.ap-guangzhou.myqcloud.com/server-2024.txt"
 ];
-
-const FALLBACK_API_SOURCES = [
-  "www.cdnaspa.club",
-  "www.cdnaspa.vip",
-  "www.cdnplaystation6.cc",
-  "www.cdnplaystation6.vip"
-];
-
-const getTokenWithTokenparam = (ts, ver = APP_VERSION, secret = APP_TOKEN_SECRET) => {
-  const tokenparam = `${ts},${ver}`;
-  const token = CryptoJS.MD5(`${ts}${secret}`).toString();
-  return { token, tokenparam };
-};
-
-const decodeDataText = (data, ts, secret = APP_DATA_SECRET) => {
-  const dataWordArray = CryptoJS.enc.Base64.parse(data);
-  const token = CryptoJS.MD5(`${ts}${secret}`).toString();
-  const tokenWordArray = CryptoJS.enc.Utf8.parse(token);
-  const encrypted = CryptoJS.lib.CipherParams.create({
-    ciphertext: dataWordArray
-  });
-  const decrypted = CryptoJS.AES.decrypt(encrypted, tokenWordArray, {
-    mode: CryptoJS.mode.ECB,
-    padding: CryptoJS.pad.Pkcs7
-  });
-  return decrypted.toString(CryptoJS.enc.Utf8);
-};
-
-const decodeJsonData = (data, ts, secret) => {
-  return JSON.parse(decodeDataText(data, ts, secret));
-};
 
 const stripNonAsciiPrefix = (text) => {
   let result = text;
@@ -63,6 +34,19 @@ const normalizeApiSource = (source) => {
 
 const normalizeApiSources = (sources) => {
   return Array.from(new Set(sources.map(normalizeApiSource).filter(Boolean)));
+};
+
+/**
+ * Build standard JMComic API request headers.
+ */
+const buildJMHeaders = (token, tokenparam) => {
+  const headers = new Headers();
+  headers.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
+  headers.set('Accept', 'application/json');
+  headers.set('token', token);
+  headers.set('tokenparam', tokenparam);
+  headers.set('Accept-Encoding', 'gzip, deflate');
+  return headers;
 };
 
 let cachedApiSources = null;
@@ -171,8 +155,12 @@ export default {
 
     // --- E-Hentai Gallery Details ---
     if (url.pathname === '/api/ehentai/gallery') {
-      const gid = url.searchParams.get('gid');
+      const gid = parseInt(url.searchParams.get('gid'), 10);
       const token = url.searchParams.get('token');
+
+      if (isNaN(gid)) {
+        return new Response(JSON.stringify({ error: "Invalid gid" }), { status: 400, headers: { "Access-Control-Allow-Origin": "*" } });
+      }
       
       if (!gid || !token) {
         return new Response(JSON.stringify({ error: "Missing gid or token" }), { status: 400, headers: { "Access-Control-Allow-Origin": "*" } });
@@ -181,7 +169,7 @@ export default {
       try {
         const payload = {
           method: "gdata",
-          gidlist: [[parseInt(gid), token]],
+          gidlist: [[gid, token]],
           namespace: 1
         };
 
@@ -222,12 +210,7 @@ export default {
         const timestamp = Math.floor(Date.now() / 1000);
         const { token, tokenparam } = getTokenWithTokenparam(timestamp);
 
-        const searchHeaders = new Headers();
-        searchHeaders.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
-        searchHeaders.set('Accept', 'application/json');
-        searchHeaders.set('token', token);
-        searchHeaders.set('tokenparam', tokenparam);
-        searchHeaders.set('Accept-Encoding', 'gzip, deflate');
+        const searchHeaders = buildJMHeaders(token, tokenparam);
 
         let lastError = null;
 
@@ -289,8 +272,8 @@ export default {
     }
 
     if (url.pathname.startsWith('/api/jmcomic/')) {
-      const jmId = url.pathname.split('/').pop();
-      if (!jmId) return new Response('Bad Request', { status: 400 });
+      const jmId = url.pathname.split('/').filter(Boolean).pop();
+      if (!jmId || !/^\d+$/.test(jmId)) return new Response('Bad Request', { status: 400 });
 
       // Check cache if KV is configured
       const cacheKey = `jmcomic_${jmId}`;
@@ -310,12 +293,7 @@ export default {
       const timestamp = Math.floor(Date.now() / 1000);
       const { token, tokenparam } = getTokenWithTokenparam(timestamp);
 
-      const newHeaders = new Headers();
-      newHeaders.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
-      newHeaders.set('Accept', 'application/json');
-      newHeaders.set('token', token);
-      newHeaders.set('tokenparam', tokenparam);
-      newHeaders.set('Accept-Encoding', 'gzip, deflate');
+      const jmHeaders = buildJMHeaders(token, tokenparam);
 
       let lastError = null;
       let rawData = null;
@@ -326,7 +304,7 @@ export default {
         try {
           const jmResponse = await fetch(targetUrl, {
             method: 'GET',
-            headers: newHeaders,
+            headers: jmHeaders,
             signal: AbortSignal.timeout(10000)
           });
 

@@ -679,9 +679,6 @@ body {
 }
 
 /* ===== Transfer Panel (换乘) ===== */
-.transfer-area {
-  /* No more slideInRight animation, View Transitions API handles the smooth appearance natively */
-}
 
 /* Mobile: stack below operation area */
 @media (max-width: 1023px) {
@@ -705,32 +702,7 @@ body {
   margin-bottom: 20px;
 }
 
-.transfer-tab {
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  padding: 8px 14px;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: 13px;
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.3s ease;
-  user-select: none;
-  color: var(--text-dark);
-}
-
-.transfer-tab:hover {
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.transfer-tab.active {
-  background: var(--primary-btn, var(--primary-color));
-  color: white;
-  border-color: var(--primary-btn, var(--primary-color));
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 40%, transparent);
-}
+/* .transfer-tab styles merged into shared .platform-btn, .transfer-tab selector above */
 
 /* Transfer Search Input */
 .transfer-search-group {
@@ -845,16 +817,7 @@ body {
   color: var(--primary-color);
 }
 
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+
 
 /* ===== Footer ===== */
 .footer {
@@ -867,6 +830,12 @@ body {
   font-size: 13px;
   color: var(--text-light);
   z-index: 5;
+  font-family: 'Varela Round', sans-serif;
+  font-weight: bold;
+  min-height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .footer a {
@@ -952,9 +921,3 @@ body {
   }
 }
 
-/* Background fluid drift */
-@keyframes moveFluid {
-  0%   { transform: translate(0, 0) rotate(0deg); }
-  50%  { transform: translate(-10%, 10%) rotate(5deg); }
-  100% { transform: translate(10%, -10%) rotate(-5deg); }
-}

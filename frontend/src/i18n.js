@@ -91,12 +91,27 @@ export function t(key) {
 }
 
 /**
- * Apply translations to DOM elements with data-i18n attributes
+ * Apply translations to DOM elements with data-i18n attributes.
+ * Uses text-node replacement to preserve child elements (e.g. <i> icons).
  */
 export function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    el.textContent = t(key);
+    const translated = t(key);
+
+    // If the element has child elements (e.g., <i> icon + text),
+    // only update the last text node to preserve the icon.
+    if (el.children.length > 0) {
+      const lastChild = el.lastChild;
+      if (lastChild && lastChild.nodeType === Node.TEXT_NODE) {
+        lastChild.textContent = ' ' + translated;
+      } else {
+        // Append a new text node if none exists
+        el.appendChild(document.createTextNode(' ' + translated));
+      }
+    } else {
+      el.textContent = translated;
+    }
   });
 
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {

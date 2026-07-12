@@ -57,6 +57,6 @@
    * 顶部内嵌 Tab 切换栏（使用与平台选择 Toggle 相同的 `platform-btn` 样式），根据输入源动态显示可用的换乘目标平台。
    * 内容区显示模糊搜索结果列表，每条结果包含缩略图、标题、平台来源标识，可点击跳转。
    * 加载中、空状态、错误状态均复用全局的 `fade-element` 过渡系统。
- * **全局动效与物理互动 (Physics & Micro-interactions)**：
-   * 所有主要悬浮区块除了带有半透明毛玻璃属性外，在鼠标悬浮（Hover）时，应监听鼠标的相对位置，产生**3D 物理倾斜**（CSS `transform: perspective(...) rotateX(...) rotateY(...)`）。
-   * 默认附带微弱的平滑位移动画，模拟失重感。
+ * **全局动效 (Micro-interactions)**：
+   * 采用基于 `transition` 和 `@keyframes` 的多级缓动动画，所有的显隐状态通过自定义 `.fade-element` 等全局类统一管理。
+   * 支持通过 View Transitions API 实现无缝跨状态过渡。
