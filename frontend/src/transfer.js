@@ -95,15 +95,15 @@ export async function searchPicacg(_query) {
 export function getTransferTargets(sourcePlatform) {
   if (sourcePlatform === 'jm') {
     return [
-      { id: 'eh', label: 'E-Hentai', icon: 'fa-solid fa-paw', searchFn: searchEhentai },
-      { id: 'nhentai', label: 'nHentai', icon: 'fa-solid fa-n', searchFn: searchNhentai },
-      { id: 'picacg', label: '哔咔漫画', icon: 'fa-solid fa-pepper-hot', searchFn: searchPicacg },
+      { id: 'eh', labelKey: 'platform.eh', icon: 'fa-solid fa-paw', searchFn: searchEhentai },
+      { id: 'nhentai', labelKey: 'platform.nhentai', icon: 'fa-solid fa-n', searchFn: searchNhentai },
+      { id: 'picacg', labelKey: 'platform.picacg', icon: 'fa-solid fa-pepper-hot', searchFn: searchPicacg },
     ];
   } else if (sourcePlatform === 'eh') {
     return [
-      { id: 'jm', label: 'JMComic', icon: 'fa-solid fa-book-open', searchFn: searchJmcomic },
-      { id: 'nhentai', label: 'nHentai', icon: 'fa-solid fa-n', searchFn: searchNhentai },
-      { id: 'picacg', label: '哔咔漫画', icon: 'fa-solid fa-pepper-hot', searchFn: searchPicacg },
+      { id: 'jm', labelKey: 'platform.jm', icon: 'fa-solid fa-book-open', searchFn: searchJmcomic },
+      { id: 'nhentai', labelKey: 'platform.nhentai', icon: 'fa-solid fa-n', searchFn: searchNhentai },
+      { id: 'picacg', labelKey: 'platform.picacg', icon: 'fa-solid fa-pepper-hot', searchFn: searchPicacg },
     ];
   }
   return [];

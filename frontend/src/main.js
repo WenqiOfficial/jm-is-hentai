@@ -619,7 +619,7 @@ function initApp() {
       btn.className = 'transfer-tab' + (idx === 0 ? ' active' : '');
       btn.setAttribute('role', 'tab');
       btn.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
-      btn.innerHTML = `<i class="${target.icon}"></i> ${target.label}`;
+      btn.innerHTML = `<i class="${target.icon}"></i> <span data-i18n="${target.labelKey}">${t(target.labelKey)}</span>`;
       btn.addEventListener('click', () => switchTransferTab(target.id, candidates));
       transferTabs.appendChild(btn);
     });

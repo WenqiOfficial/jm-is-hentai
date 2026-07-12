@@ -97,6 +97,8 @@
   z-index: 9990;
   opacity: 0;
   visibility: hidden;
+  transform: translateZ(0);
+  will-change: opacity, transform, backdrop-filter;
   transition: opacity 0.4s ease, visibility 0.4s;
 }
 
@@ -690,8 +692,8 @@ body.mask-active .menu-toggle {
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 1px var(--glass-border);
   padding: 40px;
-  /* width: 100%; */
-  width: 450px;
+  width: 100%;
+  max-width: 450px;
   border-radius: 32px; /* Clean rounded card instead of egg */
   overflow: hidden; /* Contain glare */
   z-index: 1; /* Keep above cloud decorations */
@@ -735,6 +737,7 @@ body.mask-active .menu-toggle {
   gap: 6px;
   user-select: none;
   color: var(--text-dark);
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
@@ -975,6 +978,7 @@ body.mask-active .menu-toggle {
 .transfer-tabs {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
 }

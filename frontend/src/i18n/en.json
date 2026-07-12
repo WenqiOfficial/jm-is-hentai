@@ -9,6 +9,8 @@
   "search.title": "Search Your Comic ID",
   "platform.jm": "JMComic",
   "platform.picacg": "PicACG",
+  "platform.eh": "E-Hentai",
+  "platform.nhentai": "nHentai",
   "search.input_jm": "Enter JMComic ID...",
   "search.input_eh": "Enter E-Hentai query...",
   "search.button": "Search",

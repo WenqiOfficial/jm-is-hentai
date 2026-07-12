@@ -9,6 +9,8 @@
   "search.title": "IDで検索",
   "platform.jm": "JMComic",
   "platform.picacg": "PicACG",
+  "platform.eh": "E-Hentai",
+  "platform.nhentai": "nHentai",
   "search.input_jm": "JMComic IDを入力...",
   "search.input_eh": "E-Hentaiのキーワードを入力...",
   "search.button": "検索",
