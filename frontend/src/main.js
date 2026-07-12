@@ -6,15 +6,41 @@ import { translateTag, checkAndUpdateTags } from './tag-translator.js';
 import { initLogoInteractivity, setLogoCentered } from './logo.js';
 import no18Icon from '../image/no18.png';
 
+let settingsPanelWasOpen = false;
+
 // --- Global Loading Mask Manager ---
 window.addEventListener('showLoading', () => {
   document.body.classList.add('mask-active');
   setLogoCentered(true);
+  
+  // Plan 2: Hide settings panel while mask is active to avoid WebKit blur conflicts
+  const settingsPanel = document.getElementById('settings-panel');
+  const settingsBtn = document.getElementById('settings-btn');
+  if (settingsPanel && !settingsPanel.classList.contains('is-hidden')) {
+    settingsPanelWasOpen = true;
+    settingsPanel.classList.add('is-hidden');
+    if (settingsBtn) settingsBtn.setAttribute('aria-expanded', 'false');
+  } else {
+    settingsPanelWasOpen = false;
+  }
 });
 
 window.addEventListener('hideLoading', () => {
   document.body.classList.remove('mask-active');
   setLogoCentered(false);
+  
+  // Restore settings panel AFTER the mask has fully faded out (0.4s)
+  if (settingsPanelWasOpen) {
+    settingsPanelWasOpen = false;
+    setTimeout(() => {
+      const settingsPanel = document.getElementById('settings-panel');
+      const settingsBtn = document.getElementById('settings-btn');
+      if (settingsPanel) {
+        settingsPanel.classList.remove('is-hidden');
+        if (settingsBtn) settingsBtn.setAttribute('aria-expanded', 'true');
+      }
+    }, 400);
+  }
 });
 
 function hideInitialLoading() {
@@ -465,10 +491,15 @@ function initApp() {
   };
 
   // ============================================
+  // ============================================
   //  Search Logic
   // ============================================
 
+  let currentSearchId = 0;
+
   const handleSearch = async () => {
+    const searchId = ++currentSearchId;
+    
     const currentPlatform = document.querySelector('input[name="platform"]:checked')?.value || 'jm';
     let query = input.value.trim();
 
@@ -492,6 +523,8 @@ function initApp() {
     try {
       if (currentPlatform === 'jm') {
         const album = await fetchAlbumInfo(query, fetchMode);
+        
+        if (searchId !== currentSearchId) return; // Discard if overridden
 
         currentAlbumData = album;
         currentPlatformState = 'jm';
@@ -503,12 +536,16 @@ function initApp() {
 
       } else if (currentPlatform === 'eh') {
         const results = await searchEhentai(query);
+        if (searchId !== currentSearchId) return; // Discard if overridden
+
         if (!results || results.length === 0) {
           throw new Error(t('alert.no_eh_gallery'));
         }
 
         const baseAlbum = results[0];
         const galleryDetails = await fetchEhentaiGallery(baseAlbum.gid, baseAlbum.token);
+        if (searchId !== currentSearchId) return; // Discard if overridden
+
         const album = galleryDetails || baseAlbum;
         const tags = album.tags || [];
 
@@ -530,6 +567,7 @@ function initApp() {
         triggerTransfer(baseAlbum.title || query, currentPlatform);
       }
     } catch (err) {
+      if (searchId !== currentSearchId) return; // Discard if overridden
       smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, comicInfo], errorMsg, 'block');
       errorMsg.textContent = err.message;
     }
@@ -642,15 +680,23 @@ function initApp() {
     }
   }
 
+  let currentTransferSearchId = 0;
   async function handleTransferSearch() {
     if (!activeTransferTab) return;
     const keyword = transferKeywordInput.value.trim();
     if (!keyword) return;
     
-    // Force re-search on current tab with exactly the user's input (single candidate)
-    const tabId = activeTransferTab;
-    activeTransferTab = null; // reset to force re-render
-    switchTransferTab(tabId, [keyword]);
+    const searchId = ++currentTransferSearchId;
+
+    try {
+      // Force re-search on current tab with exactly the user's input (single candidate)
+      const tabId = activeTransferTab;
+      activeTransferTab = null; // reset to force re-render
+      await switchTransferTab(tabId, [keyword]);
+    } catch (err) {
+      if (searchId !== currentTransferSearchId) return;
+      console.error(err);
+    }
   }
 
   transferSearchBtn.addEventListener('click', handleTransferSearch);
@@ -870,9 +916,16 @@ function initApp() {
 
   // Bind Update Tags button
   const updateTagsBtn = document.getElementById('update-tags-btn');
+  let isUpdatingTags = false;
   if (updateTagsBtn) {
-    updateTagsBtn.addEventListener('click', () => {
-      checkAndUpdateTags(true);
+    updateTagsBtn.addEventListener('click', async () => {
+      if (isUpdatingTags) return;
+      isUpdatingTags = true;
+      try {
+        await checkAndUpdateTags(true);
+      } finally {
+        isUpdatingTags = false;
+      }
     });
   }
 

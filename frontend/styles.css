@@ -97,8 +97,6 @@
   z-index: 9990;
   opacity: 0;
   visibility: hidden;
-  transform: translateZ(0);
-  will-change: opacity, transform, backdrop-filter;
   transition: opacity 0.4s ease, visibility 0.4s;
 }
 
@@ -217,7 +215,6 @@ body:lang(ja) {
 body.mask-active .header {
   z-index: 9999;
 }
-
 body.mask-active.initial-load .logo {
   position: fixed;
   top: 50%;
@@ -1109,7 +1106,6 @@ body.mask-active .menu-toggle {
   bottom: 0;
   left: 0;
   width: 100%;
-  z-index: 9999;
   text-align: center;
   padding: 16px;
   font-size: 14px;
@@ -1123,6 +1119,8 @@ body.mask-active .menu-toggle {
   justify-content: center;
   align-items: center;
 }
+
+
 
 .footer a {
   color: var(--text-dark);
