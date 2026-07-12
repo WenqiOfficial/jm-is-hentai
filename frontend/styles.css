@@ -359,11 +359,14 @@ body {
   backdrop-filter: blur(0px);
 }
 
-.nsfw-icon {
-  width: 80px;
-  height: 80px;
+.visual-content img.nsfw-icon {
+  width: 180px !important;
+  height: auto !important;
+  max-width: 50% !important; /* ensure it scales down on very small screens */
   object-fit: contain;
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+  animation: none; /* override slideUpFade from general img */
+  transform: none; /* override general img */
 }
 
 .nsfw-text {
@@ -375,28 +378,35 @@ body {
 }
 
 .nsfw-btn {
-  margin-top: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  color: white;
-  padding: 10px 24px;
-  border-radius: 20px;
-  font-size: 14px;
+  margin-top: 12px;
+  padding: 12px 32px;
+  font-size: 16px;
   font-weight: bold;
-  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
+  background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(4px);
-  transition: all 0.2s ease;
+  color: white;
+  cursor: pointer;
   font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.3s ease,
+              box-shadow 0.3s ease;
 }
 
 .nsfw-btn:hover {
+  transform: scale(1.05);
   background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 
 .nsfw-btn:active {
-  transform: translateY(0);
+  transform: scale(0.92);
 }
 
 

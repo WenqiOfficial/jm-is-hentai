@@ -3,6 +3,7 @@ import { WebGLBackground } from './webgl-background.js';
 import { getTransferTargets, searchEhentai, fetchEhentaiGallery } from './transfer.js';
 import { initI18n, t, getCurrentLang } from './i18n.js';
 import { translateTag, checkAndUpdateTags } from './tag-translator.js';
+import no18Icon from '../image/no18.png';
 
 document.addEventListener('DOMContentLoaded', () => {
   initI18n();
@@ -282,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.className = 'nsfw-overlay';
         
         const icon = document.createElement('img');
-        icon.src = './image/no18.png';
+        icon.src = no18Icon;
         icon.className = 'nsfw-icon';
         icon.alt = '18+';
         
@@ -460,7 +461,9 @@ document.addEventListener('DOMContentLoaded', () => {
           id: query,
           name: comicTitle.textContent,
           _source_domain: 'eh',
-          _thumbnail: album.thumb || baseAlbum.thumbnail
+          _thumbnail: album.thumb || baseAlbum.thumbnail,
+          category: album.category,
+          tags: tags
         });
 
         triggerTransfer(baseAlbum.title || query, currentPlatform);

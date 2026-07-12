@@ -8,6 +8,7 @@ const CACHE_VERSION_KEY = 'ehtt_version';
 // In-memory flattened cache: {'artist:mizuryu kei': '水龙敬'}
 let tagCache = null; 
 let isDownloading = false;
+let t2sConverter = null;
 
 /**
  * Open or create IndexedDB
@@ -211,12 +212,35 @@ export function translateTag(tag, lang) {
     if (tagCache.zh2en && tagCache.zh2en[tag.trim()]) {
       return tag.trim();
     }
+    
+    // Attempt Traditional to Simplified conversion for lookup
+    if (window.OpenCC && tagCache.zh2en) {
+      if (!t2sConverter) {
+        try { t2sConverter = window.OpenCC.Converter({ from: 'tw', to: 'cn' }); } catch (e) {}
+      }
+      if (t2sConverter) {
+        const simplifiedTag = t2sConverter(tag.trim());
+        if (tagCache.zh2en[simplifiedTag]) return tag.trim();
+      }
+    }
+    
     return bareTag;
   } else {
     // Chinese -> English (or Japanese fallback to English)
     const dict = tagCache.zh2en;
     if (dict) {
       if (dict[tag.trim()]) return dict[tag.trim()];
+      
+      // Attempt Traditional to Simplified conversion for lookup
+      if (window.OpenCC) {
+        if (!t2sConverter) {
+          try { t2sConverter = window.OpenCC.Converter({ from: 'tw', to: 'cn' }); } catch (e) {}
+        }
+        if (t2sConverter) {
+          const simplifiedTag = t2sConverter(tag.trim());
+          if (dict[simplifiedTag]) return dict[simplifiedTag];
+        }
+      }
     }
     // If it's already English (exists in en2zh keys), return stripped
     if (tagCache.en2zh && tagCache.en2zh[bareTag]) {
