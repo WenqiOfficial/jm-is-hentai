@@ -1,40 +1,9 @@
 import {
   FALLBACK_API_SOURCES,
   getTokenWithTokenparam,
-  decodeDataText,
   decodeJsonData,
+  fetchLatestApiSources
 } from '../shared/crypto.js';
-
-const API_DOMAIN_SERVER_SECRET = "diosfjckwpqpdfjkvnqQjsik";
-
-const API_DOMAIN_SERVER_URLS = [
-  "https://rup4a04-c01.tos-ap-southeast-1.bytepluses.com/newsvr-2025.txt",
-  "https://rup4a04-c02.tos-cn-hongkong.bytepluses.com/newsvr-2025.txt",
-  "https://rup4a04-c03.tos-cn-beijing.bytepluses.com.cn/newsvr-2025.txt",
-  "https://jmappc01-1308024008.cos.ap-guangzhou.myqcloud.com/server-2024.txt"
-];
-
-const stripNonAsciiPrefix = (text) => {
-  let result = text;
-  while (result && result.charCodeAt(0) > 127) {
-    result = result.slice(1);
-  }
-  return result;
-};
-
-const normalizeApiSource = (source) => {
-  const trimmed = source.trim();
-  if (!trimmed) return "";
-  try {
-    return new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`).host;
-  } catch {
-    return trimmed.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  }
-};
-
-const normalizeApiSources = (sources) => {
-  return Array.from(new Set(sources.map(normalizeApiSource).filter(Boolean)));
-};
 
 /**
  * Build standard JMComic API request headers.
@@ -49,33 +18,31 @@ const buildJMHeaders = (token, tokenparam) => {
   return headers;
 };
 
-let cachedApiSources = null;
-let lastSourceFetchTime = 0;
+/**
+ * Get CORS headers securely
+ */
+const getCorsHeaders = (request) => {
+  const origin = request.headers.get("Origin");
+  if (!origin) return {};
 
-const fetchLatestApiSources = async () => {
-  const now = Date.now();
-  if (cachedApiSources && now - lastSourceFetchTime < 3600000) { // cache for 1 hour
-    return cachedApiSources;
-  }
+  const allowedKeywords = [
+    'localhost',
+    '127.0.0.1',
+    'wenqi.icu',
+    '1224630.xyz',
+    'zeroarea.top'
+  ];
 
-  for (const url of API_DOMAIN_SERVER_URLS) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
-      if (!response.ok) continue;
-      const encryptedText = stripNonAsciiPrefix(await response.text());
-      const decodedText = decodeDataText(encryptedText, "", API_DOMAIN_SERVER_SECRET);
-      const data = JSON.parse(decodedText);
-      const sources = normalizeApiSources(data.Server ?? []);
-      if (sources.length > 0) {
-        cachedApiSources = sources;
-        lastSourceFetchTime = now;
-        return sources;
-      }
-    } catch (e) {
-      // ignore error and try next
-    }
+  if (allowedKeywords.some(keyword => origin.includes(keyword))) {
+    return { "Access-Control-Allow-Origin": origin };
   }
-  return null;
+  
+  return {};
+};
+
+const createResponse = (body, request, init = {}) => {
+  const headers = { ...init.headers, ...getCorsHeaders(request) };
+  return new Response(body, { ...init, headers });
 };
 
 export default {
@@ -84,9 +51,8 @@ export default {
 
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, {
+      return createResponse(null, request, {
         headers: {
-          "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "*",
         },
@@ -97,8 +63,8 @@ export default {
     if (url.pathname === '/api/ehentai/search') {
       const q = url.searchParams.get('q');
       if (!q) {
-        return new Response(JSON.stringify({ results: [] }), {
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        return createResponse(JSON.stringify({ results: [] }), request, {
+          headers: { "Content-Type": "application/json" }
         });
       }
 
@@ -143,12 +109,12 @@ export default {
           results.push({ title, url: galleryUrl, thumbnail, gid, token });
         }
 
-        return new Response(JSON.stringify({ results }), {
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        return createResponse(JSON.stringify({ results }), request, {
+          headers: { "Content-Type": "application/json" }
         });
       } catch (e) {
-        return new Response(JSON.stringify({ results: [], error: e.message }), {
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        return createResponse(JSON.stringify({ results: [], error: e.message }), request, {
+          headers: { "Content-Type": "application/json" }
         });
       }
     }
@@ -159,11 +125,11 @@ export default {
       const token = url.searchParams.get('token');
 
       if (isNaN(gid)) {
-        return new Response(JSON.stringify({ error: "Invalid gid" }), { status: 400, headers: { "Access-Control-Allow-Origin": "*" } });
+        return createResponse(JSON.stringify({ error: "Invalid gid" }), request, { status: 400, headers: { "Content-Type": "application/json" } });
       }
       
       if (!gid || !token) {
-        return new Response(JSON.stringify({ error: "Missing gid or token" }), { status: 400, headers: { "Access-Control-Allow-Origin": "*" } });
+        return createResponse(JSON.stringify({ error: "Missing gid or token" }), request, { status: 400, headers: { "Content-Type": "application/json" } });
       }
 
       try {
@@ -183,16 +149,16 @@ export default {
         const data = await resp.json();
         if (data.gmetadata && data.gmetadata.length > 0) {
           const meta = data.gmetadata[0];
-          return new Response(JSON.stringify({ gallery: meta }), {
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          return createResponse(JSON.stringify({ gallery: meta }), request, {
+            headers: { "Content-Type": "application/json" }
           });
         } else {
           throw new Error('Gallery not found in API response');
         }
       } catch (e) {
-        return new Response(JSON.stringify({ error: e.message }), {
+        return createResponse(JSON.stringify({ error: e.message }), request, {
           status: 500,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          headers: { "Content-Type": "application/json" }
         });
       }
     }
@@ -200,8 +166,8 @@ export default {
     if (url.pathname === '/api/jmcomic/search') {
       const q = url.searchParams.get('q');
       if (!q) {
-        return new Response(JSON.stringify({ results: [] }), {
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        return createResponse(JSON.stringify({ results: [] }), request, {
+          headers: { "Content-Type": "application/json" }
         });
       }
 
@@ -236,8 +202,8 @@ export default {
                   thumbnail: `https://${domain}/media/albums/${item.id}_3x4.jpg`
                 }));
 
-                return new Response(JSON.stringify({ results }), {
-                  headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+                return createResponse(JSON.stringify({ results }), request, {
+                  headers: { "Content-Type": "application/json" }
                 });
               } catch (e) {
                 lastError = e;
@@ -248,42 +214,40 @@ export default {
           }
         }
 
-        return new Response(JSON.stringify({
+        return createResponse(JSON.stringify({
           results: [],
           error: lastError ? lastError.message : 'All domains failed'
-        }), {
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        }), request, {
+          headers: { "Content-Type": "application/json" }
         });
       } catch (e) {
-        return new Response(JSON.stringify({ results: [], error: e.message }), {
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        return createResponse(JSON.stringify({ results: [], error: e.message }), request, {
+          headers: { "Content-Type": "application/json" }
         });
       }
     }
 
     if (url.pathname === '/api/jmcomic/sources') {
       const sources = await fetchLatestApiSources() || FALLBACK_API_SOURCES;
-      return new Response(JSON.stringify({ sources }), {
+      return createResponse(JSON.stringify({ sources }), request, {
         headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Content-Type": "application/json"
         }
       });
     }
 
     if (url.pathname.startsWith('/api/jmcomic/')) {
       const jmId = url.pathname.split('/').filter(Boolean).pop();
-      if (!jmId || !/^\d+$/.test(jmId)) return new Response('Bad Request', { status: 400 });
+      if (!jmId || !/^\d+$/.test(jmId)) return createResponse('Bad Request', request, { status: 400 });
 
       // Check cache if KV is configured
       const cacheKey = `jmcomic_${jmId}`;
       if (env.JM_CACHE) {
         const cached = await env.JM_CACHE.get(cacheKey);
         if (cached) {
-          return new Response(cached, {
+          return createResponse(cached, request, {
             headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*"
+              "Content-Type": "application/json"
             }
           });
         }
@@ -334,26 +298,24 @@ export default {
           ctx.waitUntil(env.JM_CACHE.put(cacheKey, rawData, { expirationTtl: 86400 * 7 })); // Cache for 7 days
         }
 
-        return new Response(rawData, {
+        return createResponse(rawData, request, {
           headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Content-Type": "application/json"
           }
         });
       } else {
-        return new Response(JSON.stringify({
+        return createResponse(JSON.stringify({
             code: 502,
             message: `Fetch Error: ${lastError ? lastError.message : 'All domains failed'}`
-        }), { 
+        }), request, { 
           status: 502, 
           headers: { 
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*" 
+              "Content-Type": "application/json"
           } 
         });
       }
     }
 
-    return new Response("Not Found", { status: 404, headers: { "Access-Control-Allow-Origin": "*" } });
+    return createResponse("Not Found", request, { status: 404, headers: { "Content-Type": "text/plain" } });
   }
 };

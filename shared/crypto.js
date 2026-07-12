@@ -10,6 +10,14 @@ export const APP_TOKEN_SECRET = '18comicAPP';
 export const APP_DATA_SECRET = '185Hcomic3PAPP7R';
 export const APP_VERSION = '1.8.0';
 
+export const API_DOMAIN_SERVER_SECRET = "diosfjckwpqpdfjkvnqQjsik";
+export const API_DOMAIN_SERVER_URLS = [
+  "https://rup4a04-c01.tos-ap-southeast-1.bytepluses.com/newsvr-2025.txt",
+  "https://rup4a04-c02.tos-cn-hongkong.bytepluses.com/newsvr-2025.txt",
+  "https://rup4a04-c03.tos-cn-beijing.bytepluses.com.cn/newsvr-2025.txt",
+  "https://jmappc01-1308024008.cos.ap-guangzhou.myqcloud.com/server-2024.txt"
+];
+
 export const FALLBACK_API_SOURCES = [
   'www.cdnaspa.club',
   'www.cdnaspa.vip',
@@ -58,3 +66,92 @@ export function decodeJsonData(data, ts, secret) {
     throw new Error(`解密数据 JSON 解析失败: ${e.message}`);
   }
 }
+
+/**
+ * Strip non-ASCII prefixes from encrypted texts
+ */
+export const stripNonAsciiPrefix = (text) => {
+  let result = text;
+  while (result && result.charCodeAt(0) > 127) {
+    result = result.slice(1);
+  }
+  return result;
+};
+
+/**
+ * Normalize an API source domain
+ */
+export const normalizeApiSource = (source) => {
+  const trimmed = source.trim();
+  if (!trimmed) return "";
+  try {
+    return new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`).host;
+  } catch {
+    return trimmed.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  }
+};
+
+export const normalizeApiSources = (sources) => {
+  return Array.from(new Set(sources.map(normalizeApiSource).filter(Boolean)));
+};
+
+let memoryCachedSources = null;
+let lastMemoryFetchTime = 0;
+
+/**
+ * Fetch the latest API sources from the domain server texts.
+ * Uses localStorage (in browser) or memory cache (in worker) for 1 hour.
+ */
+export const fetchLatestApiSources = async (timeout = 5000) => {
+  const now = Date.now();
+  const cacheKey = 'jmcomic_api_sources';
+  const cacheTTL = 3600000; // 1 hour
+
+  // Check memory cache first
+  if (memoryCachedSources && now - lastMemoryFetchTime < cacheTTL) {
+    return memoryCachedSources;
+  }
+
+  // Check localStorage (Browser only)
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const stored = JSON.parse(localStorage.getItem(cacheKey));
+      if (stored && stored.timestamp && now - stored.timestamp < cacheTTL) {
+        memoryCachedSources = stored.sources;
+        lastMemoryFetchTime = stored.timestamp;
+        return stored.sources;
+      }
+    } catch (e) {
+      // ignore localStorage errors
+    }
+  }
+
+  for (const url of API_DOMAIN_SERVER_URLS) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(timeout) });
+      if (!response.ok) continue;
+      const encryptedText = stripNonAsciiPrefix(await response.text());
+      const decodedText = decodeDataText(encryptedText, "", API_DOMAIN_SERVER_SECRET);
+      const data = JSON.parse(decodedText);
+      const sources = normalizeApiSources(data.Server ?? []);
+      
+      if (sources.length > 0) {
+        memoryCachedSources = sources;
+        lastMemoryFetchTime = now;
+        
+        // Save to localStorage if in browser
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: now,
+            sources: sources
+          }));
+        }
+        return sources;
+      }
+    } catch (e) {
+      // ignore error and try next URL
+    }
+  }
+  
+  return null;
+};

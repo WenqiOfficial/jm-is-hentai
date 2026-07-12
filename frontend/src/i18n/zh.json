@@ -35,7 +35,7 @@
   "toast.update_fail": "更新失败",
   "footer.made_with_love": "Made with love❤️",
   "footer.no_tracking": "本网站不提供也不存储任何信息，内容均由其余网站提供",
-  "settings.auto_blur": "自动模糊 NSFW 封面",
+  "settings.auto_blur": "NSFW 审计",
   "nsfw.risky": "潜在的风险内容",
   "nsfw.view": "查看图片"
 }

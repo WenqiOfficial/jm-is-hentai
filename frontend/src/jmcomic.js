@@ -2,6 +2,7 @@ import {
   FALLBACK_API_SOURCES,
   getTokenWithTokenparam,
   decodeJsonData,
+  fetchLatestApiSources
 } from '../../shared/crypto.js';
 
 // Re-export for any consumers that import from here
@@ -39,7 +40,9 @@ export async function fetchAlbumInfo(jmId, mode = 'api') {
     const { token, tokenparam } = getTokenWithTokenparam(ts);
     
     let lastError = null;
-    for (const domain of FALLBACK_API_SOURCES) {
+    const sources = await fetchLatestApiSources() || FALLBACK_API_SOURCES;
+    
+    for (const domain of sources) {
       try {
         const response = await fetch(`https://${domain}/album?id=${jmId}`, {
           headers: {
@@ -51,7 +54,9 @@ export async function fetchAlbumInfo(jmId, mode = 'api') {
         if (response.ok) {
           const resJson = await response.json();
           if (resJson.code === 200 && resJson.data) {
-            return decodeJsonData(resJson.data, ts);
+            const decoded = decodeJsonData(resJson.data, ts);
+            decoded._source_domain = domain;
+            return decoded;
           }
         }
       } catch (err) {
