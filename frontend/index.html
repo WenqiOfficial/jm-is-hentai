@@ -7,7 +7,7 @@
   <meta name="description" content="Hentai车站 — JMComic 编号检索工具，快速查询漫画信息">
   <title>Hentai车站</title>
   <link rel="icon" href="./favicon.ico" type="image/x-icon">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.snrat.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="./src/toast.css">
   <link rel="stylesheet" href="./src/footer.css">
@@ -22,13 +22,18 @@
   <header class="header" role="banner">
     <div class="header-left">
       <div class="menu-toggle">
-        <button id="settings-btn" class="icon-btn"
+        <div class="header-right">
+          <button id="theme-btn" class="icon-btn" aria-label="Toggle Theme" title="Toggle Theme">
+            <i class="fas fa-moon"></i>
+          </button>
+          <button id="settings-btn" class="icon-btn"
                 title="设置"
                 aria-label="打开设置菜单"
                 aria-expanded="false"
                 aria-controls="settings-panel">
           <i class="fa-solid fa-bars"></i>
         </button>
+        </div>
         <div id="settings-panel" class="settings-panel is-hidden"
              role="menu"
              aria-label="数据源设置">

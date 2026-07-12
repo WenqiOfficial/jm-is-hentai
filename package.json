@@ -8,13 +8,19 @@
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy"
   },
-  "keywords": ["jmcomic", "e-hentai", "proxy", "converter"],
+  "keywords": [
+    "jmcomic",
+    "e-hentai",
+    "proxy",
+    "converter"
+  ],
   "author": "OrPudding",
   "license": "MIT",
   "dependencies": {
     "crypto-js": "^4.2.0"
   },
   "devDependencies": {
+    "esbuild": "^0.28.1",
     "vite": "^8.1.4",
     "wrangler": "^4.110.0"
   }

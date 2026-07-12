@@ -231,6 +231,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const settingsBtn = document.getElementById('settings-btn');
   const settingsPanel = document.getElementById('settings-panel');
+  
+  // --- Dark Mode Logic ---
+  const themeBtn = document.getElementById('theme-btn');
+  const icon = themeBtn.querySelector('i');
+  
+  const setTheme = (isDark) => {
+    if (isDark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      icon.className = 'fas fa-sun';
+      localStorage.setItem('app_theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      icon.className = 'fas fa-moon';
+      localStorage.setItem('app_theme', 'light');
+    }
+  };
+
+  // Initialize theme
+  const savedTheme = localStorage.getItem('app_theme');
+  if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    setTheme(true);
+  } else {
+    setTheme(false);
+  }
+
+  themeBtn.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    setTheme(!isDark);
+  });
+
+  // --- Search Engine Selection ---
   const dataSourceRadios = document.getElementsByName('datasource');
 
   let fetchMode = localStorage.getItem('datasource') || 'api';

@@ -28,11 +28,42 @@
   --text-light: #64748B;
   --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4));
   --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-surface: rgba(255, 255, 255, 0.4);
+  --glass-surface-hover: rgba(255, 255, 255, 0.7);
+  --input-bg: rgba(255, 255, 255, 0.5);
+  --input-bg-focus: rgba(255, 255, 255, 0.9);
+  --input-border: rgba(255, 255, 255, 0.6);
+  --input-border-hover: rgba(255, 255, 255, 1);
 
   /* Smooth 1.5s transition for @property-registered colors */
   transition: --primary-color 1.5s ease,
               --secondary-color 1.5s ease,
               --accent-color 1.5s ease;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0b0f19;
+  --text-dark: #f8fafc;
+  --text-light: #94a3b8;
+
+  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-surface: rgba(0, 0, 0, 0.4);
+  --glass-surface-hover: rgba(0, 0, 0, 0.6);
+  
+  --input-bg: rgba(0, 0, 0, 0.5);
+  --input-bg-focus: rgba(0, 0, 0, 0.7);
+  --input-border: rgba(255, 255, 255, 0.15);
+  --input-border-hover: rgba(255, 255, 255, 0.3);
+  
+  /* Retain vibrancy for dark mode */
+  --primary-color: #79A3DB; 
+  --secondary-color: #D3A5D3;
+  --accent-color: #D1D487;
+}
+
+[data-theme="dark"] .background-container {
+  filter: brightness(0.35) saturate(0.8);
 }
 
 * {
@@ -42,8 +73,8 @@
 }
 
 body {
-  font-family: 'Fredoka', 'KeinannMaruPOP', 'KingnamMaruPop', '荆南圆体', 'M PLUS Rounded 1c', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-weight: bold;
+  font-family: 'Fredoka', 'KeinannMaruPOP', 'KingnamMaruPop', '荆南圆体', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: 0.03em;
   color: var(--text-dark);
   background-color: var(--bg-color);
   min-height: 100vh;
@@ -140,7 +171,7 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 600;
   color: var(--text-dark);
   text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
   cursor: grab;
@@ -307,7 +338,7 @@ body {
 }
 
 .toggle-label:hover {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--glass-surface-hover);
   transform: translateY(-1px);
 }
 
@@ -419,20 +450,17 @@ body {
 
 .nsfw-text {
   color: white;
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 24px;
   text-shadow: 0 2px 6px rgba(0,0,0,0.8);
-  letter-spacing: 0.5px;
 }
 
 .nsfw-btn {
   margin-top: 12px;
   padding: 12px 32px;
   font-size: 16px;
-  font-weight: bold;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--glass-border);
   border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--glass-surface);
   backdrop-filter: blur(4px);
   color: white;
   cursor: pointer;
@@ -449,8 +477,8 @@ body {
 
 .nsfw-btn:hover {
   transform: scale(1.05);
-  background: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  background: var(--glass-surface-hover);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
 }
 
 .nsfw-btn:active {
@@ -476,7 +504,7 @@ body {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 1px var(--glass-border);
   padding: 40px;
   /* width: 100%; */
   width: 450px;
@@ -515,8 +543,8 @@ body {
 
 /* ===== Shared Interactive Options (Tabs & Toggles) ===== */
 .platform-btn, .transfer-tab {
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: var(--glass-surface);
+  border: 1px solid var(--input-border);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -527,7 +555,7 @@ body {
 }
 
 .platform-btn:hover, .transfer-tab:hover {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--glass-surface-hover);
   transform: translateY(-1px);
 }
 
@@ -542,7 +570,7 @@ body {
 .platform-btn, .transfer-tab {
   padding: 10px 16px;
   border-radius: 25px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -559,11 +587,12 @@ body {
 .rounded-input {
   width: 100%;
   padding: 16px 24px;
-  font-size: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  font-size: 18px;
+  font-weight: 600;
+  border: 2px solid var(--input-border);
   /* Cloud-shape organic border */
   border-radius: 30px 20px 40px 25px / 20px 30px 25px 40px;
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--input-bg);
   color: var(--text-dark);
   outline: none;
   transition: all 0.3s ease;
@@ -571,12 +600,12 @@ body {
 }
 
 .rounded-input:hover {
-  border-color: rgba(255, 255, 255, 1);
+  border-color: var(--input-border-hover);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .rounded-input:focus {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--input-bg-focus);
   border-color: var(--primary-btn, var(--primary-color));
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 30%, transparent);
 }
@@ -590,7 +619,8 @@ body {
   width: 100%;
   padding: 16px 32px;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
+  letter-spacing: .05em;
   border: none;
   border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
   background: var(--primary-btn, var(--primary-color));
@@ -705,7 +735,7 @@ body {
 
 .comic-meta {
   color: var(--text-light);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .tag-cloud {
@@ -719,7 +749,7 @@ body {
   background: rgba(255, 255, 255, 0.7);
   padding: 4px 12px;
   border-radius: 16px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-dark);
   transition: transform 0.2s ease, background 0.2s ease;
 }
@@ -820,9 +850,9 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 12px;
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   text-decoration: none;
   color: var(--text-dark);
@@ -831,8 +861,8 @@ body {
 }
 
 .transfer-result-item:hover {
-  background: rgba(255, 255, 255, 0.75);
-  transform: translateX(4px);
+  background: var(--glass-surface-hover);
+  transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
@@ -842,7 +872,9 @@ body {
   border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: var(--glass-surface);
+  overflow: hidden;
 }
 
 .transfer-result-info {
@@ -851,8 +883,9 @@ body {
 }
 
 .transfer-result-title {
-  font-size: 13px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .05em;
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -882,11 +915,12 @@ body {
   width: 100%;
   text-align: center;
   padding: 16px;
-  font-size: 13px;
+  font-size: 14px;
+  letter-spacing: 0.03em;
   color: var(--text-light);
   z-index: 5;
   font-family: inherit;
-  font-weight: bold;
+  font-weight: 600;
   min-height: 56px;
   display: flex;
   justify-content: center;
