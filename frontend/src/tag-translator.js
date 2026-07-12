@@ -57,8 +57,9 @@ async function setDBItem(key, value) {
 /**
  * Core function to download, parse, and save the database.
  * @param {boolean} isBackground - If true, it updates silently without blocking UI toasts.
+ * @param {string} targetVersion - The github release version tag to persist.
  */
-async function fetchAndCacheDB(isBackground = false) {
+async function fetchAndCacheDB(isBackground = false, targetVersion = null) {
   if (isDownloading) return;
   isDownloading = true;
 
@@ -90,7 +91,7 @@ async function fetchAndCacheDB(isBackground = false) {
     // Save to IndexedDB
     await setDBItem('flattened_tags', flatDict);
     await setDBItem('last_update', Date.now());
-    await setDBItem('version', json.version || Date.now());
+    await setDBItem('version', targetVersion || json.version || Date.now());
     
     tagCache = flatDict;
     if (!isBackground) {
@@ -168,7 +169,7 @@ export async function checkAndUpdateTags(manual = false) {
     }
 
     // Needs update
-    await fetchAndCacheDB(!manual);
+    await fetchAndCacheDB(!manual, latestVersion);
 
   } catch (err) {
     console.error('Update check failed:', err);

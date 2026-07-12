@@ -41,11 +41,11 @@ export function showToast(message, type = 'info', duration = 3000) {
   // Auto remove
   setTimeout(() => {
     toast.classList.add('hiding');
-    // Wait for the slideOutRightToast animation to finish (600ms) before removing
+    // Wait for the slideOutRightToast animation to finish (300ms) before removing
     setTimeout(() => {
       if (toastContainer.contains(toast)) {
         toast.remove();
       }
-    }, 600);
+    }, 300);
   }, duration);
 }
