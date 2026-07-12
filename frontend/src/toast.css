@@ -24,14 +24,43 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  animation: slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: slideInRightToast 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   pointer-events: auto;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  overflow: hidden; /* For smooth collapsing */
 }
 
 .toast.hiding {
-  opacity: 0;
-  transform: translateX(100%);
+  animation: slideOutRightToast 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes slideInRightToast {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideOutRightToast {
+  0% { 
+    opacity: 1; 
+    transform: translateX(0); 
+    max-height: 100px; 
+    padding: 12px 20px; 
+    margin-bottom: 0; 
+  }
+  50% { 
+    opacity: 0; 
+    transform: translateX(100%); 
+    max-height: 100px; 
+    padding: 12px 20px; 
+    margin-bottom: 0; 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translateX(100%); 
+    max-height: 0; 
+    padding: 0 20px; 
+    margin-bottom: -12px; /* Negates the flex gap */
+    border-width: 0; 
+  }
 }
 
 .toast i.info { color: #3b82f6; }

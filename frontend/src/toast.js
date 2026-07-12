@@ -41,8 +41,11 @@ export function showToast(message, type = 'info', duration = 3000) {
   // Auto remove
   setTimeout(() => {
     toast.classList.add('hiding');
-    toast.addEventListener('transitionend', () => {
-      toast.remove();
-    });
+    // Wait for the slideOutRightToast animation to finish (600ms) before removing
+    setTimeout(() => {
+      if (toastContainer.contains(toast)) {
+        toast.remove();
+      }
+    }, 600);
   }, duration);
 }
