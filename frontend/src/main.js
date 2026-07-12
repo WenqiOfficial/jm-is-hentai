@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsBtn = document.getElementById('settings-btn');
   const settingsPanel = document.getElementById('settings-panel');
   
-  // --- Dark Mode Logic ---
+  /* --- 暂时隐藏深色模式逻辑 ---
   const themeBtn = document.getElementById('theme-btn');
   const icon = themeBtn.querySelector('i');
   
@@ -260,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     setTheme(!isDark);
   });
+  */
 
   // --- Search Engine Selection ---
   const dataSourceRadios = document.getElementsByName('datasource');

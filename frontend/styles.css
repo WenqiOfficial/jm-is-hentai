@@ -41,6 +41,7 @@
               --accent-color 1.5s ease;
 }
 
+/* 暂时隐藏深色模式
 [data-theme="dark"] {
   --bg-color: #0b0f19;
   --text-dark: #f8fafc;
@@ -56,7 +57,6 @@
   --input-border: rgba(255, 255, 255, 0.15);
   --input-border-hover: rgba(255, 255, 255, 0.3);
   
-  /* Retain vibrancy for dark mode */
   --primary-color: #79A3DB; 
   --secondary-color: #D3A5D3;
   --accent-color: #D1D487;
@@ -65,6 +65,7 @@
 [data-theme="dark"] .background-container {
   filter: brightness(0.35) saturate(0.8);
 }
+*/
 
 * {
   box-sizing: border-box;
@@ -233,8 +234,8 @@ body {
   font-size: 18px;
   color: var(--text-dark);
   cursor: pointer;
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -255,8 +256,8 @@ body {
   top: 55px;
   left: 0; /* Anchor left instead of right to prevent off-screen overflow */
   background: var(--glass-bg);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border: 2px solid var(--glass-border);
   border-radius: 20px;
   padding: 16px;
@@ -380,8 +381,8 @@ body {
   aspect-ratio: 3/4; /* Standard portrait aspect ratio */
   border-radius: 24px;
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -461,6 +462,7 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
   background: var(--glass-surface);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   color: white;
   cursor: pointer;
@@ -501,8 +503,8 @@ body {
 .card {
   position: relative;
   background: var(--glass-bg);
-  backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 1px var(--glass-border);
   padding: 40px;
