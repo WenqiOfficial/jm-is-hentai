@@ -21,95 +21,13 @@ export function initLogoInteractivity() {
 
   const SPRING = 0.1;
   const FRICTION = 0.75;
-  // Threshold below which we consider the entity "at rest" and stop the RAF
-  const SETTLE_THRESHOLD = 0.05;
+  const FLOAT_AMP = 1.2;
+  const FLOAT_SPEED = 0.0015;
+  let time = 0;
 
   let isCentering = false;
   let centerTargetX = 0;
   let centerTargetY = 0;
-
-  // ── RAF on-demand engine ──────────────────────────────────────────────────
-  // The loop ONLY runs during drag or spring-back. When idle, CSS animation
-  // handles the gentle float — zero JS overhead, zero compositor pressure.
-  let rafId = null;
-
-  /** Mark all entities as JS-controlled, disable CSS float */
-  function enterJsMode() {
-    entities.forEach(ent => ent.el.classList.add('js-driven'));
-  }
-
-  /** Restore CSS float animation and clear JS transforms */
-  function exitJsMode() {
-    entities.forEach(ent => {
-      ent.el.classList.remove('js-driven');
-      ent.el.style.transform = '';
-      ent.x = 0;
-      ent.y = 0;
-      ent.vx = 0;
-      ent.vy = 0;
-    });
-  }
-
-  function startLoop() {
-    if (!rafId) rafId = requestAnimationFrame(loop);
-  }
-
-  const loop = () => {
-    rafId = null;
-    let anyMoving = false;
-
-    for (let i = 0; i < entities.length; i++) {
-      const c = entities[i];
-      let tx = 0, ty = 0;
-
-      if (isCentering) {
-        tx = centerTargetX;
-        ty = centerTargetY;
-      } else if (dragAnchorIndex !== -1) {
-        // Chain-follow towards the dragged anchor
-        if (i === dragAnchorIndex) {
-          tx = targetX;
-          ty = targetY;
-        } else if (i < dragAnchorIndex) {
-          tx = entities[i + 1].x;
-          ty = entities[i + 1].y;
-        } else {
-          tx = entities[i - 1].x;
-          ty = entities[i - 1].y;
-        }
-      }
-      // else: idle — CSS handles it, tx/ty stay 0 so spring pulls to origin
-
-      c.vx += (tx - c.x) * SPRING;
-      c.vy += (ty - c.y) * SPRING;
-
-      c.vx *= FRICTION;
-      c.vy *= FRICTION;
-
-      c.x += c.vx;
-      c.y += c.vy;
-
-      c.el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
-
-      if (
-        Math.abs(c.vx) > SETTLE_THRESHOLD ||
-        Math.abs(c.vy) > SETTLE_THRESHOLD ||
-        Math.abs(c.x) > SETTLE_THRESHOLD ||
-        Math.abs(c.y) > SETTLE_THRESHOLD
-      ) {
-        anyMoving = true;
-      }
-    }
-
-    if (dragAnchorIndex !== -1 || isCentering || anyMoving) {
-      // Still animating — schedule next frame
-      rafId = requestAnimationFrame(loop);
-    } else {
-      // Fully settled — hand control back to CSS
-      exitJsMode();
-    }
-  };
-  // ─────────────────────────────────────────────────────────────────────────
 
   // Handle SSR Hydration
   const wasInitialLoad = document.body.classList.contains('initial-load');
@@ -125,15 +43,11 @@ export function initLogoInteractivity() {
       const logoCenterY = rect.top + rect.height / 2;
       const screenCenterX = window.innerWidth / 2;
       const screenCenterY = window.innerHeight / 2;
-
+      
       centerTargetX = screenCenterX - logoCenterX;
       centerTargetY = screenCenterY - logoCenterY;
-
+      
       dragAnchorIndex = -1;
-      enterJsMode();
-      startLoop();
-    } else {
-      // isCentering = false: the loop will spring back to 0 and then call exitJsMode()
     }
   };
 
@@ -141,63 +55,51 @@ export function initLogoInteractivity() {
     const text = t('app.title');
     container.innerHTML = '';
     entities = [];
-
+    
     // Add image as the first entity
-    entities.push({ el: logoImg, x: 0, y: 0, vx: 0, vy: 0 });
-
+    entities.push({ el: logoImg, x: 0, y: 0, vx: 0, vy: 0, rx: Math.random() * Math.PI * 2, ry: Math.random() * Math.PI * 2 });
+    
     // Add letters
-    Array.from(text).forEach((char, i) => {
+    const textArr = Array.from(text);
+    textArr.forEach(char => {
       const span = document.createElement('span');
       span.textContent = char === ' ' ? '\u00A0' : char;
       span.className = 'logo-letter';
-      // Stagger the idle float phase per letter via CSS custom property
-      span.style.setProperty('--logo-float-dur', `${3.5 + (i % 5) * 0.35}s`);
-      span.style.animationDelay = `${(i % 7) * -0.5}s`;
       container.appendChild(span);
-      entities.push({ el: span, x: 0, y: 0, vx: 0, vy: 0, isText: true });
+      entities.push({ el: span, x: 0, y: 0, vx: 0, vy: 0, rx: Math.random() * Math.PI * 2, ry: Math.random() * Math.PI * 2, isText: true });
     });
 
-    // HYDRATION: If centering (initial load or language switch), snap entities to center
-    if (isCentering) {
-      requestAnimationFrame(() => {
-        enterJsMode();
+    // Capture the initial layout offset to seamlessly connect the background gradient
+    requestAnimationFrame(() => {
+      // HYDRATION: If we are centering (initial load or language switch), forcefully set new entities to the center so they can fly back smoothly!
+      if (isCentering) {
         entities.forEach(ent => {
           ent.x = centerTargetX;
           ent.y = centerTargetY;
-          ent.el.style.transform = `translate3d(${ent.x}px, ${ent.y}px, 0)`;
         });
-      });
-    }
+      }
+    });
   };
 
   updateText();
   window.addEventListener('languageChanged', updateText);
 
-  // Pause RAF when page is hidden (tab switch, phone screen off)
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && rafId) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    } else if (!document.hidden && (dragAnchorIndex !== -1 || isCentering)) {
-      startLoop();
-    }
-  });
-
-  // ── Pointer events ────────────────────────────────────────────────────────
+  // Pointer events on the main container
   mainLogo.addEventListener('pointerdown', (e) => {
+    // Find which entity was actually clicked
     const target = e.target;
     dragAnchorIndex = entities.findIndex(ent => ent.el === target);
+    
+    // If user clicked the container background, default to the image (0)
     if (dragAnchorIndex === -1) dragAnchorIndex = 0;
-
+    
+    // Reset target to the entity's current position so it doesn't snap to an old target
     targetX = entities[dragAnchorIndex].x;
     targetY = entities[dragAnchorIndex].y;
-
+    
     startPointerX = e.clientX - targetX;
     startPointerY = e.clientY - targetY;
     mainLogo.setPointerCapture(e.pointerId);
-
-    enterJsMode();
-    startLoop();
   });
 
   mainLogo.addEventListener('pointermove', (e) => {
@@ -208,9 +110,52 @@ export function initLogoInteractivity() {
 
   const stopDrag = () => {
     dragAnchorIndex = -1;
-    // Loop continues to spring back to 0, then calls exitJsMode() automatically
   };
 
   mainLogo.addEventListener('pointerup', stopDrag);
   mainLogo.addEventListener('pointercancel', stopDrag);
+
+  const loop = () => {
+    time += 16;
+    
+    for (let i = 0; i < entities.length; i++) {
+      const c = entities[i];
+      let tx = 0, ty = 0;
+      
+      if (isCentering) {
+        tx = centerTargetX;
+        ty = centerTargetY;
+      } else if (dragAnchorIndex === -1) {
+        // Floating at rest
+        tx = Math.sin(time * FLOAT_SPEED + c.rx) * FLOAT_AMP;
+        ty = Math.cos(time * FLOAT_SPEED + c.ry) * FLOAT_AMP;
+      } else {
+        // Chain follow towards the anchor
+        if (i === dragAnchorIndex) {
+          tx = targetX;
+          ty = targetY;
+        } else if (i < dragAnchorIndex) {
+          tx = entities[i + 1].x;
+          ty = entities[i + 1].y;
+        } else if (i > dragAnchorIndex) {
+          tx = entities[i - 1].x;
+          ty = entities[i - 1].y;
+        }
+      }
+      
+      c.vx += (tx - c.x) * SPRING;
+      c.vy += (ty - c.y) * SPRING;
+      
+      c.vx *= FRICTION;
+      c.vy *= FRICTION;
+      
+      c.x += c.vx;
+      c.y += c.vy;
+      
+      c.el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
+    }
+    requestAnimationFrame(loop);
+  };
+  
+  requestAnimationFrame(loop);
 }

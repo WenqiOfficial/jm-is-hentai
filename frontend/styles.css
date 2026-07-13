@@ -284,16 +284,9 @@ body.mask-active .menu-toggle {
 
 .logo-letter, .logo-img {
   position: relative;
+  will-change: transform;
   user-select: none;
   cursor: grab;
-  /* Idle float is driven by CSS — no JS/RAF overhead when not dragging */
-  animation: logoIdleFloat var(--logo-float-dur, 4s) ease-in-out infinite alternate;
-}
-
-/* Disable CSS float when JS is taking over (drag or spring-back) */
-.logo-letter.js-driven, .logo-img.js-driven {
-  animation: none;
-  will-change: transform; /* Promote to GPU layer only during active JS animation */
 }
 
 .logo-letter:active, .logo-img:active {
@@ -1270,12 +1263,6 @@ body.mask-active .menu-toggle {
 @keyframes logoGradientFlow {
   from { background-position: 0px 50%; }
   to   { background-position: -250px 50%; }
-}
-
-/* Logo idle float — pure CSS, zero RAF/JS overhead */
-@keyframes logoIdleFloat {
-  from { transform: translate3d(0, 0px, 0); }
-  to   { transform: translate3d(0, -2.5px, 0); }
 }
 
 /* Jelly bounce: multi-oscillation squash & stretch */
