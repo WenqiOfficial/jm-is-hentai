@@ -1,5 +1,4 @@
-const SW_VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
-const CACHE_NAME = `hentai-station-pwa-${SW_VERSION}`;
+const CACHE_NAME = 'hentai-station-pwa';
 const PRECACHE_URLS = [
   '/',
   '/manifest.json',
@@ -32,6 +31,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
     return;
   }
+
 
   if (event.request.mode === 'navigate') {
     event.respondWith(

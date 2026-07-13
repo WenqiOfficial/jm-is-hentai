@@ -59,8 +59,9 @@
   "action.settings": "设置",
   "action.confirm": "完成",
   "action.input": "写点什么吧~",
-  "pwa.deploying": "正在部署离线优化...",
-  "pwa.deploy_success": "离线优化部署成功！",
-  "pwa.syncing": "正在同步最新离线优化...",
-  "pwa.deploy_fail": "离线优化部署失败..."
+  "pwa.deploying": "正在部署PWA...",
+  "pwa.deploy_success": "PWA部署成功！",
+  "pwa.syncing": "正在同步最新PWA...",
+  "pwa.offline": "当前已离线",
+  "pwa.deploy_fail": "PWA部署失败..."
 }

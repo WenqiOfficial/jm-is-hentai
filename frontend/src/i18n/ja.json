@@ -59,8 +59,9 @@
   "action.settings": "設定",
   "action.confirm": "完了",
   "action.input": "何か書いてね~",
-  "pwa.deploying": "オフライン最適化をデプロイ中...",
-  "pwa.deploy_success": "オフライン最適化のデプロイに成功！",
-  "pwa.syncing": "最新のオフライン最適化を同期中...",
-  "pwa.deploy_fail": "オフライン最適化のデプロイに失敗..."
+  "pwa.deploying": "PWAをデプロイ中...",
+  "pwa.deploy_success": "PWAのデプロイに成功！",
+  "pwa.syncing": "最新のPWAを同期中...",
+  "pwa.offline": "現在オフラインです",
+  "pwa.deploy_fail": "PWAのデプロイに失敗..."
 }

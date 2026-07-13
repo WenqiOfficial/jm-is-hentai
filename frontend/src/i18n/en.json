@@ -59,8 +59,9 @@
   "action.settings": "Settings",
   "action.confirm": "Done",
   "action.input": "Write something... ~",
-  "pwa.deploying": "Deploying offline optimization...",
-  "pwa.deploy_success": "Offline optimization deployed!",
-  "pwa.syncing": "Syncing latest offline optimization...",
-  "pwa.deploy_fail": "Offline optimization deployment failed..."
+  "pwa.deploying": "Deploying PWA...",
+  "pwa.deploy_success": "PWA deployed!",
+  "pwa.syncing": "Syncing latest PWA...",
+  "pwa.offline": "You are currently offline",
+  "pwa.deploy_fail": "PWA deployment failed..."
 }
