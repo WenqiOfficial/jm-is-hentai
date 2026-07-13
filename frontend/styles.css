@@ -331,10 +331,12 @@ body.mask-active .menu-toggle {
   transition: all 0.3s var(--spring-easing);
 }
 
-.icon-btn:hover {
-  background: var(--primary-btn, var(--primary-color));
-  color: var(--btn-text-color, white);
-  transform: scale(1.1);
+@media (hover: hover) {
+  .icon-btn:hover {
+    background: var(--primary-btn, var(--primary-color));
+    color: var(--btn-text-color, white);
+    transform: scale(1.1);
+  }
 }
 
 .icon-btn:focus-visible {
@@ -443,8 +445,10 @@ body.mask-active .menu-toggle {
   z-index: 2;
 }
 
-.glass-pill:hover span {
-  background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+@media (hover: hover) {
+  .glass-pill:hover span {
+    background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+  }
 }
 
 .glass-pill.active span {
@@ -513,19 +517,21 @@ body.mask-active .menu-toggle {
   transform: translateX(20px);
 }
 
-/* Glass Switch Hover Effects */
-.glass-switch:hover .switch-slider {
-  background: var(--glass-surface-hover);
-}
-.glass-switch:hover .switch-slider:before {
-  transform: scale(1.15);
-}
-.glass-switch:hover input:checked + .switch-slider {
-  background: var(--primary-btn, var(--primary-color));
-  filter: brightness(1.1);
-}
-.glass-switch:hover input:checked + .switch-slider:before {
-  transform: translateX(20px) scale(1.15);
+@media (hover: hover) {
+  /* Glass Switch Hover Effects */
+  .glass-switch:hover .switch-slider {
+    background: var(--glass-surface-hover);
+  }
+  .glass-switch:hover .switch-slider:before {
+    transform: scale(1.15);
+  }
+  .glass-switch:hover input:checked + .switch-slider {
+    background: var(--primary-btn, var(--primary-color));
+    filter: brightness(1.1);
+  }
+  .glass-switch:hover input:checked + .switch-slider:before {
+    transform: translateX(20px) scale(1.15);
+  }
 }
 
 /* ===== Layout ===== */
@@ -662,10 +668,12 @@ body.mask-active .menu-toggle {
               box-shadow 0.3s ease;
 }
 
-.nsfw-btn:hover {
-  transform: scale(1.05);
-  background: var(--glass-surface-hover);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+@media (hover: hover) {
+  .nsfw-btn:hover {
+    transform: scale(1.05);
+    background: var(--glass-surface-hover);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  }
 }
 
 .nsfw-btn:active {
@@ -757,8 +765,10 @@ body.mask-active .menu-toggle {
   z-index: 1; /* Keep above sliding block */
 }
 
-.platform-btn:hover, .transfer-tab:hover {
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .platform-btn:hover, .transfer-tab:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .platform-btn input {
@@ -793,9 +803,11 @@ body.mask-active .menu-toggle {
   font-family: inherit;
 }
 
-.rounded-input:hover {
-  border-color: var(--input-border-hover);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+@media (hover: hover) {
+  .rounded-input:hover {
+    border-color: var(--input-border-hover);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
 }
 
 .rounded-input:focus {
@@ -832,9 +844,11 @@ body.mask-active .menu-toggle {
               background 0.3s ease;
 }
 
-.jelly-btn:hover {
-  transform: scale(1.05);
-  background: color-mix(in srgb, var(--primary-btn, var(--primary-color)) 85%, black);
+@media (hover: hover) {
+  .jelly-btn:hover {
+    transform: scale(1.05);
+    background: color-mix(in srgb, var(--primary-btn, var(--primary-color)) 85%, black);
+  }
 }
 
 .jelly-btn:active {
@@ -858,8 +872,10 @@ body.mask-active .menu-toggle {
   color: var(--btn-text-color-alt, white);
 }
 
-.jelly-btn.alt:hover {
-  background: color-mix(in srgb, var(--secondary-color) 85%, black);
+@media (hover: hover) {
+  .jelly-btn.alt:hover {
+    background: color-mix(in srgb, var(--secondary-color) 85%, black);
+  }
 }
 
 .jelly-btn:focus-visible {
@@ -959,9 +975,11 @@ body.mask-active .menu-toggle {
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.tag:hover {
-  transform: scale(1.08);
-  background: rgba(255, 255, 255, 0.9);
+@media (hover: hover) {
+  .tag:hover {
+    transform: scale(1.08);
+    background: rgba(255, 255, 255, 0.9);
+  }
 }
 
 .actions {
@@ -1091,10 +1109,12 @@ body.mask-active .menu-toggle {
   animation: slideUpFade 0.35s var(--ease-out-expo) both;
 }
 
-.transfer-result-item:hover {
-  background: var(--glass-surface-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+@media (hover: hover) {
+  .transfer-result-item:hover {
+    background: var(--glass-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
 }
 
 .transfer-result-thumb {
@@ -1131,9 +1151,11 @@ body.mask-active .menu-toggle {
   transition: transform 0.2s ease;
 }
 
-.transfer-result-item:hover .transfer-result-arrow {
-  transform: translateX(4px);
-  color: var(--primary-color);
+@media (hover: hover) {
+  .transfer-result-item:hover .transfer-result-arrow {
+    transform: translateX(4px);
+    color: var(--primary-color);
+  }
 }
 
 /* Copyable Text Interaction */
@@ -1142,8 +1164,10 @@ body.mask-active .menu-toggle {
   transition: opacity 0.2s ease, transform 0.1s ease;
   user-select: text; /* Allow normal text selection */
 }
-.copyable:hover {
-  opacity: 0.75;
+@media (hover: hover) {
+  .copyable:hover {
+    opacity: 0.75;
+  }
 }
 .copyable:active {
   transform: scale(0.98);
@@ -1178,9 +1202,11 @@ body.mask-active .menu-toggle {
   transition: color 0.2s, border-color 0.2s;
 }
 
-.footer a:hover {
-  color: var(--primary-color);
-  border-color: var(--primary-color);
+@media (hover: hover) {
+  .footer a:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
 }
 
 /* ===== Keyframe Animations ===== */

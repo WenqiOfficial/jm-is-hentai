@@ -73,6 +73,10 @@ function initApp() {
   const comicTags = document.getElementById('comic-tags');
   const jmLink = document.getElementById('jm-link');
 
+  // Initialize one-time copy listeners on persistent DOM elements
+  setupCopyOnClick(comicTitle, () => comicTitle.textContent);
+  setupCopyOnClick(comicAuthor, () => comicAuthor.textContent);
+
   // === State Management for Reactive Re-rendering ===
   let currentAlbumData = null;
   let currentPlatformState = null;
@@ -164,10 +168,6 @@ function initApp() {
 
     comicTitle.textContent = config.getTitle(album, query);
     comicAuthor.textContent = config.getAuthor(album);
-    
-    // Attach one-click copy
-    setupCopyOnClick(comicTitle, comicTitle.textContent);
-    setupCopyOnClick(comicAuthor, comicAuthor.textContent);
 
     renderTags(album.tags || [], lang, true);
     jmLink.href = linkHref;
