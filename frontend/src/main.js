@@ -13,6 +13,11 @@ import { initPwaVersioning } from './pwa-update.js';
 import no18Icon from '../image/no18.png';
 
 let settingsPanelWasOpen = false;
+const SAFE_NSFW_TAGS = new Set(['非工口', 'non-h', '无h', '非h']);
+
+function isSafeContent(tags) {
+  return (tags || []).some((tag) => SAFE_NSFW_TAGS.has(String(tag).trim().toLowerCase()));
+}
 
 // --- Global Loading Mask Manager ---
 window.addEventListener('showLoading', () => {
@@ -301,7 +306,7 @@ function initApp() {
         const cat = album.category || '';
         isNsfw = cat.toLowerCase() !== 'non-h';
       } else {
-        isNsfw = !tags.includes('非工口') && !tags.includes('non-h');
+        isNsfw = !isSafeContent(tags);
       }
 
       if (isNsfw) {
