@@ -1,6 +1,6 @@
 import { fetchAlbumInfo } from './jmcomic.js';
 import { WebGLBackground } from './webgl-background.js';
-import { searchEhentai, fetchEhentaiGallery } from './transfer.js';
+import { searchEhentai, fetchEhentaiGallery } from './ehentai.js';
 import { initI18n, t, getCurrentLang, setI18nText, setI18nPlaceholder, setI18nTitle, I18nError } from './i18n.js';
 import { translateTag, checkAndUpdateTags } from './tag-translator.js';
 import { initLogoInteractivity, setLogoCentered } from './logo.js';
