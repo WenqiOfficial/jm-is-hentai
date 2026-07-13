@@ -942,6 +942,19 @@ function initApp() {
     });
   });
 
+  // Settings Pill Sync
+  const settingsPills = document.querySelectorAll('.glass-pill-group input[type="radio"]');
+  settingsPills.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const container = e.target.closest('.glass-pill-group');
+      container.querySelectorAll('.glass-pill').forEach(btn => btn.classList.remove('active'));
+      if (e.target.checked) {
+        e.target.parentElement.classList.add('active');
+        syncJellyTracker(container);
+      }
+    });
+  });
+
   // ============================================
   //  Jelly Tracker Sync (Unified for Platform and Transfer)
   // ============================================
@@ -965,7 +978,7 @@ function initApp() {
   });
 
   // Observe all containers with jelly trackers
-  document.querySelectorAll('.platform-toggle, .transfer-tabs').forEach(container => {
+  document.querySelectorAll('.platform-toggle, .transfer-tabs, .glass-pill-group').forEach(container => {
     jellyObserver.observe(container);
     // Initial sync
     requestAnimationFrame(() => requestAnimationFrame(() => syncJellyTracker(container)));

@@ -332,13 +332,13 @@ body.mask-active .menu-toggle {
 }
 
 .icon-btn:hover {
-  background: var(--primary-color);
-  color: white;
+  background: var(--primary-btn, var(--primary-color));
+  color: var(--btn-text-color, white);
   transform: scale(1.1);
 }
 
 .icon-btn:focus-visible {
-  outline: 3px solid var(--primary-color);
+  outline: 3px solid var(--primary-btn, var(--primary-color));
   outline-offset: 3px;
 }
 
@@ -410,36 +410,6 @@ body.mask-active .menu-toggle {
   z-index: 1;
 }
 
-/* The Sliding Segmented Control Block */
-.glass-pill-group::before {
-  content: "";
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: calc(50% - 6px);
-  height: 34px;
-  background: var(--primary-btn, var(--primary-color));
-  border-radius: 8px;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 40%, transparent);
-  transition: transform 0.35s var(--spring-easing);
-  z-index: -1;
-  pointer-events: none;
-}
-
-/* Logic for slider movement using :has() */
-.glass-pill-group:has(.glass-pill:nth-child(1) input:checked)::before {
-  transform: translate(0, 0);
-}
-.glass-pill-group:has(.glass-pill:nth-child(2) input:checked)::before {
-  transform: translate(calc(100% + 4px), 0);
-}
-.glass-pill-group:has(.glass-pill:nth-child(3) input:checked)::before {
-  transform: translate(0, 38px);
-}
-.glass-pill-group:has(.glass-pill:nth-child(4) input:checked)::before {
-  transform: translate(calc(100% + 4px), 38px);
-}
-
 .glass-pill {
   flex: 1;
   text-align: center;
@@ -468,7 +438,7 @@ body.mask-active .menu-toggle {
   padding: 0 4px;
   border-radius: 8px;
   transition: all 0.2s ease;
-  color: var(--text-dark);
+  color: var(--text-light); /* Better inactive contrast */
   position: relative;
   z-index: 2;
 }
@@ -477,8 +447,8 @@ body.mask-active .menu-toggle {
   background: color-mix(in srgb, var(--primary-color) 15%, transparent);
 }
 
-.glass-pill input:checked + span {
-  color: white;
+.glass-pill.active span {
+  color: var(--btn-text-color, white);
 }
 
 /* Glass Switch */
