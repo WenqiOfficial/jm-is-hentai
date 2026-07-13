@@ -198,9 +198,6 @@ function initApp() {
   }
 
   window.addEventListener('languageChanged', (e) => {
-    // Clear cache so that dynamically translated synthetic search results (e.g., nHentai) are regenerated
-    transferCache = {};
-
     if (!currentAlbumData || comicInfo.style.display === 'none') return;
     const config = PLATFORM_CONFIG[currentPlatformState];
     if (!config) return;
