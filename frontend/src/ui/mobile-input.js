@@ -32,18 +32,17 @@ export function initUniversalMobileInput() {
     target.placeholder = source.placeholder || "...";
   };
 
+  // --- Fix: Primitive Obsession ---
+  // Use the declarative `data-input-context` attribute instead of matching IDs/classNames.
+  const isSearchInput = (source) => {
+    return source.type === 'search' || source.dataset.inputContext === 'search';
+  };
+
   // Helper to dynamically update submit button and title
   const updateModalUI = (source) => {
-    // Rely on structural attributes instead of translated strings
-    const isSearchContext = source.type === 'search' || 
-                            (source.id && source.id.toLowerCase().includes('search')) || 
-                            (source.className && typeof source.className === 'string' && source.className.toLowerCase().includes('search')) ||
-                            source.id === 'jm-id-input' || 
-                            source.id === 'transfer-keyword-input';
-    
     const titleEl = modal.querySelector('.mobile-input-title');
 
-    if (isSearchContext) {
+    if (isSearchInput(source)) {
       if (titleEl) {
         titleEl.setAttribute('data-i18n', 'search.mobile_input');
         titleEl.innerText = t('search.mobile_input') || 'Search';
@@ -80,15 +79,40 @@ export function initUniversalMobileInput() {
     return target;
   };
 
+  // --- Fix: Tap detection with coordinate threshold ---
+  // A bare touchmove boolean causes false positives due to natural finger jitter.
+  // Track start coordinates and require a 10px movement delta before marking as scroll.
+  let touchStartX = 0;
+  let touchStartY = 0;
   let isScrolling = false;
+  const SCROLL_THRESHOLD = 10; // px
   
-  document.addEventListener('touchstart', () => {
+  document.addEventListener('touchstart', (e) => {
     isScrolling = false;
+    if (e.touches.length > 0) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
   }, { passive: true });
   
-  document.addEventListener('touchmove', () => {
-    isScrolling = true;
+  document.addEventListener('touchmove', (e) => {
+    if (!isScrolling && e.touches.length > 0) {
+      const dx = Math.abs(e.touches[0].clientX - touchStartX);
+      const dy = Math.abs(e.touches[0].clientY - touchStartY);
+      if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) {
+        isScrolling = true;
+      }
+    }
   }, { passive: true });
+
+  // --- Fix: Duplicated Code ---
+  // Extracted helper to sync a value from the modal input to the active target.
+  const syncToTarget = (value) => {
+    if (activeTargetInput) {
+      activeTargetInput.value = value;
+      activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  };
 
   const handleInteraction = (e) => {
     if (!isMobile()) return;
@@ -141,10 +165,7 @@ export function initUniversalMobileInput() {
   };
 
   const syncValueAndClose = () => {
-    if (activeTargetInput) {
-      activeTargetInput.value = modalInput.value;
-      activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    syncToTarget(modalInput.value);
     closeModal();
   };
 
@@ -163,24 +184,23 @@ export function initUniversalMobileInput() {
     modalInput.focus();
     
     // Real-time sync even on clear
-    if (activeTargetInput) {
-      activeTargetInput.value = '';
-      activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    syncToTarget('');
   });
 
   // Real-time synchronization
   modalInput.addEventListener('input', () => {
     updateClearBtn();
-    if (activeTargetInput) {
-      activeTargetInput.value = modalInput.value;
-      activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    syncToTarget(modalInput.value);
   });
 
+  // --- Fix: Submit race condition ---
+  // Close the modal first, then dispatch Enter on the (now-restored) target.
+  // This avoids the awkward state where Enter fires while the modal is still visible.
   const submitAction = () => {
-    if (activeTargetInput) {
-      // Value is already synced in real-time, just simulate Enter keypress
+    const target = activeTargetInput;
+    syncValueAndClose(); // closes modal, clears activeTargetInput
+
+    if (target) {
       const enterEvent = new KeyboardEvent('keypress', {
         key: 'Enter',
         code: 'Enter',
@@ -188,9 +208,8 @@ export function initUniversalMobileInput() {
         which: 13,
         bubbles: true
       });
-      activeTargetInput.dispatchEvent(enterEvent);
+      target.dispatchEvent(enterEvent);
     }
-    syncValueAndClose(); // close modal
   };
 
   modalInput.addEventListener('keypress', (e) => {
