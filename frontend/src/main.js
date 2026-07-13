@@ -76,6 +76,20 @@ function initApp() {
   let currentAlbumData = null;
   let currentPlatformState = null;
 
+  // === Search Memory Restore ===
+  const lastPlatform = localStorage.getItem('last_platform') || 'jm';
+  const lastKeyword = localStorage.getItem('last_keyword') || '';
+  input.value = lastKeyword;
+  
+  document.querySelectorAll('input[name="platform"]').forEach(radio => {
+    radio.checked = (radio.value === lastPlatform);
+  });
+  if (lastPlatform === 'eh') {
+    setI18nPlaceholder(input, 'search.input_eh');
+  } else {
+    setI18nPlaceholder(input, 'search.input_jm');
+  }
+
   // ============================================
   //  Shared UI Helpers (DRY)
   // ============================================
@@ -488,6 +502,10 @@ function initApp() {
     
     const currentPlatform = document.querySelector('input[name="platform"]:checked')?.value || 'jm';
     let query = input.value.trim();
+
+    // Save Search Memory
+    localStorage.setItem('last_platform', currentPlatform);
+    localStorage.setItem('last_keyword', query);
 
       if (currentPlatform === 'jm') {
       query = query.replace(/\D/g, '');
@@ -950,6 +968,18 @@ function initApp() {
     const containers = document.querySelectorAll('.platform-toggle, .transfer-tabs, .glass-pill-group');
     
     containers.forEach(container => {
+      // 1. Initial state hydration for radio groups
+      const checkedInput = container.querySelector('input[type="radio"]:checked');
+      if (checkedInput) {
+        Array.from(container.children).forEach(child => {
+          if (child.tagName === 'LABEL' || child.tagName === 'BUTTON') {
+            child.classList.remove('active');
+          }
+        });
+        checkedInput.parentElement.classList.add('active');
+      }
+
+      // 2. Observe and track
       jellyObserver.observe(container);
       requestAnimationFrame(() => requestAnimationFrame(() => syncJellyTracker(container)));
       
