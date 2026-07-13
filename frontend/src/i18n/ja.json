@@ -54,5 +54,6 @@
   "error.direct_fetch_failed": "直接リクエスト失敗（CORSを確認してください）: {message}",
   "error.all_domains_failed": "すべての代替ドメインが失敗しました",
   "error.gallery_api": "ギャラリー API がエラーを返しました",
-  "app.description": "Hentaiステーション — JMComic ID検索ツール、漫画情報を素早く検索"
+  "app.description": "Hentaiステーション — JMComic ID検索ツール、漫画情報を素早く検索",
+  "action.settings": "設定"
 }

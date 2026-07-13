@@ -130,9 +130,23 @@ body {
   transform-style: preserve-3d;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  
   /* Hardware accelerate by default to prevent rasterization swapping on hover */
   /* We use a tiny translateZ(0) trick to promote to GPU layer gracefully */
   outline: 1px solid transparent; /* Edge hack for jagged text */
+}
+
+/* ===== Accessibility (a11y) ===== */
+:focus-visible {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: 2px !important;
+}
+
+/* For labels containing visually hidden inputs */
+label:has(input:focus-visible) {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: 2px !important;
+  border-radius: inherit;
 }
 
 /* Japanese typography prioritization */
@@ -434,7 +448,15 @@ body.mask-active .menu-toggle {
 }
 
 .glass-pill input {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .glass-pill span {
@@ -479,9 +501,15 @@ body.mask-active .menu-toggle {
 }
 
 .glass-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .switch-slider {
@@ -720,57 +748,63 @@ body.mask-active .menu-toggle {
   margin-bottom: 24px;
 }
 
-/* ===== Platform Toggle ===== */
+/* ===== Platform Toggle (Segmented Control) ===== */
 .platform-toggle {
   position: relative;
   z-index: 1; /* Keep above glare */
   display: flex;
   justify-content: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 4px;
   margin-bottom: 24px;
+  
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 29px;
+  padding: 4px;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* ===== Shared Interactive Options (Tabs & Toggles) ===== */
 .platform-btn, .transfer-tab {
-  background: var(--glass-surface);
-  border: 1px solid var(--input-border);
+  background: transparent;
+  border: 1px solid transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   user-select: none;
-  color: var(--text-dark);
+  color: var(--text-light); /* Improved inactive contrast */
   white-space: nowrap;
-  transition: all 0.2s ease;
-}
-
-.platform-btn:hover, .transfer-tab:hover {
-  background: var(--glass-surface-hover);
-  transform: translateY(-1px);
-}
-
-.platform-btn.active, .transfer-tab.active {
-  background: var(--primary-btn, var(--primary-color));
-  color: white;
-  border-color: var(--primary-btn, var(--primary-color));
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 40%, transparent);
-}
-
-/* Specifics for Platform Toggle & Transfer Tabs */
-.platform-btn, .transfer-tab {
+  transition: color 0.4s ease, transform 0.2s ease;
   padding: 10px 16px;
   border-radius: 25px;
   font-size: 16px;
   font-family: inherit;
-  transition: all 0.4s var(--spring-easing);
+  position: relative;
+  z-index: 1; /* Keep above sliding block */
+}
+
+.platform-btn:hover, .transfer-tab:hover {
+  transform: translateY(-1px);
 }
 
 .platform-btn input {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .platform-btn.active, .transfer-tab.active {
-  border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
+  color: var(--btn-text-color, white);
 }
 
 /* ===== Input ===== */
@@ -814,7 +848,7 @@ body.mask-active .menu-toggle {
   border: none;
   border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
   background: var(--primary-btn, var(--primary-color));
-  color: white;
+  color: var(--btn-text-color, white);
   cursor: pointer;
   font-family: inherit;
   display: flex;
@@ -830,7 +864,7 @@ body.mask-active .menu-toggle {
 
 .jelly-btn:hover {
   transform: scale(1.05);
-  background: #8DB5DB;
+  background: color-mix(in srgb, var(--primary-btn, var(--primary-color)) 85%, black);
 }
 
 .jelly-btn:active {
@@ -851,10 +885,11 @@ body.mask-active .menu-toggle {
 
 .jelly-btn.alt {
   background: var(--secondary-color);
+  color: var(--btn-text-color-alt, white);
 }
 
 .jelly-btn.alt:hover {
-  background: #E8A29E;
+  background: color-mix(in srgb, var(--secondary-color) 85%, black);
 }
 
 .jelly-btn:focus-visible {
@@ -981,14 +1016,39 @@ body.mask-active .menu-toggle {
 
 /* Transfer Tabs */
 .transfer-tabs {
+  position: relative;
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: wrap; /* Natural reflow */
+  gap: 4px;
   margin-bottom: 20px;
+  
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 29px;
+  padding: 4px;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  z-index: 1;
 }
 
-/* .transfer-tab styles merged into shared .platform-btn, .transfer-tab selector above */
+/* Generic Jelly Tracker for Toggles and Tabs */
+.jelly-tracker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--primary-btn, var(--primary-color));
+  border-radius: 20px 40px 25px 30px / 30px 25px 40px 20px;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 40%, transparent);
+  transition: transform 0.4s var(--spring-easing), 
+              width 0.4s var(--spring-easing), 
+              height 0.4s var(--spring-easing),
+              border-radius 0.4s var(--spring-easing);
+  z-index: 0;
+  pointer-events: none;
+}
 
 /* Transfer Search Input */
 .transfer-search-group {

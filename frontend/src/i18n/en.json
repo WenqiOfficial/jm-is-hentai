@@ -54,5 +54,6 @@
   "error.direct_fetch_failed": "Direct request failed (check CORS): {message}",
   "error.all_domains_failed": "All fallback domains failed",
   "error.gallery_api": "Gallery API returned error",
-  "app.description": "Hentai Station - JMComic ID Search Tool, quick comic info lookup"
+  "app.description": "Hentai Station - JMComic ID Search Tool, quick comic info lookup",
+  "action.settings": "Settings"
 }

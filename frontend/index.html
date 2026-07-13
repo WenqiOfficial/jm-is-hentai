@@ -28,6 +28,7 @@
         <div class="header-right">
 
           <button id="settings-btn" class="icon-btn"
+                data-i18n-title="action.settings"
                 title="设置"
                 aria-label="打开设置菜单"
                 aria-expanded="false"
@@ -41,6 +42,7 @@
           <div class="settings-section">
             <h4 data-i18n="settings.datasource"><i class="fa-solid fa-server"></i> 数据源设置</h4>
             <div class="glass-pill-group">
+              <div class="jelly-tracker"></div>
               <label class="glass-pill">
                 <input type="radio" name="datasource" value="api" checked>
                 <span data-i18n="settings.ds_api">API 代理</span>
@@ -57,6 +59,7 @@
           <div class="settings-section">
             <h4 data-i18n="settings.language"><i class="fa-solid fa-earth-asia"></i> 语言设置</h4>
             <div class="glass-pill-group">
+              <div class="jelly-tracker"></div>
               <label class="glass-pill">
                 <input type="radio" name="language" value="auto" checked>
                 <span data-i18n="settings.lang_auto">自动</span>
@@ -123,6 +126,7 @@
           <h1 class="card-title" data-i18n="search.title">检索你的车牌号</h1>
           
           <div class="platform-toggle" role="radiogroup" aria-label="搜索平台">
+            <div class="jelly-tracker"></div>
             <label class="platform-btn active">
               <input type="radio" name="platform" value="jm" checked>
               <i class="fa-solid fa-book-open"></i> <span data-i18n="platform.jm">禁漫</span>

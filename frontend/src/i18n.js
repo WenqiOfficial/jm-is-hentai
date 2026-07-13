@@ -144,6 +144,17 @@ export function applyTranslations() {
     el.setAttribute('placeholder', t(key));
   });
 
+    // Update titles for copy tooltips
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const paramsStr = el.getAttribute('data-i18n-title-params');
+    let params = undefined;
+    if (paramsStr) {
+      try { params = JSON.parse(paramsStr); } catch(e) {}
+    }
+    el.setAttribute('title', t(key, params));
+  });
+
   document.title = t('app.title');
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) {
@@ -187,6 +198,22 @@ export function setI18nText(el, key, params) {
 export function setI18nPlaceholder(el, key) {
   el.setAttribute('data-i18n-placeholder', key);
   el.setAttribute('placeholder', t(key));
+}
+
+/**
+ * Helper to dynamically bind a translation key and params to a DOM element's title attribute.
+ * @param {HTMLElement} el 
+ * @param {string} key 
+ * @param {Object} [params] 
+ */
+export function setI18nTitle(el, key, params) {
+  el.setAttribute('data-i18n-title', key);
+  if (params) {
+    el.setAttribute('data-i18n-title-params', JSON.stringify(params));
+  } else {
+    el.removeAttribute('data-i18n-title-params');
+  }
+  el.setAttribute('title', t(key, params));
 }
 
 /**

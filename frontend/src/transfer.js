@@ -71,7 +71,9 @@ export async function searchNhentai(query) {
   return [
     {
       id: query,
-      title: t('transfer.search_in_nhentai', { query }),
+      _i18nKey: 'transfer.search_in_nhentai',
+      _i18nParams: { query },
+      title: query,
       author: 'nHentai',
       url: `https://nhentai.net/search/?q=${encodeURIComponent(query)}`,
       thumbnail: ''

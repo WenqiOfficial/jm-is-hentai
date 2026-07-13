@@ -54,5 +54,6 @@
   "error.direct_fetch_failed": "直连请求失败(请检查跨域): {message}",
   "error.all_domains_failed": "所有备用域名均请求失败",
   "error.gallery_api": "画廊 API 返回错误",
-  "app.description": "Hentai车站 — JMComic 编号检索工具，快速查询漫画信息"
+  "app.description": "Hentai车站 — JMComic 编号检索工具，快速查询漫画信息",
+  "action.settings": "设置"
 }

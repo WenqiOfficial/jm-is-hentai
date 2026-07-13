@@ -1,7 +1,7 @@
 import { fetchAlbumInfo } from './jmcomic.js';
 import { WebGLBackground } from './webgl-background.js';
 import { getTransferTargets, searchEhentai, fetchEhentaiGallery } from './transfer.js';
-import { initI18n, t, getCurrentLang, setI18nText, setI18nPlaceholder, I18nError } from './i18n.js';
+import { initI18n, t, getCurrentLang, setI18nText, setI18nPlaceholder, setI18nTitle, I18nError } from './i18n.js';
 import { translateTag, checkAndUpdateTags } from './tag-translator.js';
 import { initLogoInteractivity, setLogoCentered } from './logo.js';
 import { showToast } from './toast.js';
@@ -124,7 +124,7 @@ function initApp() {
    */
   function setupCopyOnClick(element, textToCopy) {
     element.classList.add('copyable');
-    element.title = t('action.click_to_copy');
+    setI18nTitle(element, 'action.click_to_copy');
     element.addEventListener('click', () => {
       // Don't trigger copy if the user is highlighting text
       if (window.getSelection().toString().trim() !== '') return;
@@ -454,10 +454,18 @@ function initApp() {
           c2 = pastelify(c2);
           c3 = pastelify(c3);
 
+          const lumaPrimary = 0.299 * btnColor[0] + 0.587 * btnColor[1] + 0.114 * btnColor[2];
+          const textOnPrimary = lumaPrimary > 160 ? '#1E293B' : '#FFFFFF';
+          
+          const lumaSecondary = 0.299 * c2[0] + 0.587 * c2[1] + 0.114 * c2[2];
+          const textOnSecondary = lumaSecondary > 160 ? '#1E293B' : '#FFFFFF';
+
           document.documentElement.style.setProperty('--primary-color', `rgb(${c1.join(',')})`);
           document.documentElement.style.setProperty('--primary-btn', `rgb(${btnColor.join(',')})`);
           document.documentElement.style.setProperty('--secondary-color', `rgb(${c2.join(',')})`);
           document.documentElement.style.setProperty('--accent-color', `rgb(${c3.join(',')})`);
+          document.documentElement.style.setProperty('--btn-text-color', textOnPrimary);
+          document.documentElement.style.setProperty('--btn-text-color-alt', textOnSecondary);
 
           if (webglBg) {
             webglBg.setColors(c1, c2, c3);
@@ -659,7 +667,7 @@ function initApp() {
     transferKeywordInput.value = firstTargetCandidates[0] || fallbackTitle;
 
     // Build tabs
-    transferTabs.innerHTML = '';
+    transferTabs.innerHTML = '<div class="jelly-tracker"></div>';
     transferTargets.forEach((target, idx) => {
       const btn = document.createElement('button');
       const targetCandidates = candidatesMap[target.id] || [];
@@ -670,6 +678,10 @@ function initApp() {
       btn.addEventListener('click', () => switchTransferTab(target.id, targetCandidates));
       transferTabs.appendChild(btn);
     });
+    
+    // Make sure new elements are observed
+    jellyObserver.observe(transferTabs);
+    requestAnimationFrame(() => requestAnimationFrame(() => syncJellyTracker(transferTabs)));
 
     // Function to show the panel and select first tab
     const revealTransferPanel = () => {
@@ -722,11 +734,17 @@ function initApp() {
     activeTransferTab = tabId;
 
     // Update tab active state
+    let activeBtn = null;
     transferTabs.querySelectorAll('.transfer-tab').forEach((btn, idx) => {
       const isActive = transferTargets[idx].id === tabId;
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      if (isActive) activeBtn = btn;
     });
+
+    if (activeBtn) {
+      syncJellyTracker(transferTabs);
+    }
 
     const target = transferTargets.find(t => t.id === tabId);
     if (!target) return;
@@ -879,7 +897,9 @@ function initApp() {
       info.className = 'transfer-result-info';
       const title = document.createElement('div');
       title.className = 'transfer-result-title';
-      if (item.title || item.name) {
+      if (item._i18nKey) {
+        setI18nText(title, item._i18nKey, item._i18nParams);
+      } else if (item.title || item.name) {
         title.textContent = item.title || item.name;
         title.removeAttribute('data-i18n');
         title.removeAttribute('data-i18n-params');
@@ -906,9 +926,12 @@ function initApp() {
   const platformRadios = document.querySelectorAll('.platform-toggle input[type="radio"]');
   platformRadios.forEach(radio => {
     radio.addEventListener('change', (e) => {
-      document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));
+      const container = e.target.closest('.platform-toggle');
+      container.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));
       if (e.target.checked) {
         e.target.parentElement.classList.add('active');
+        syncJellyTracker(container);
+        
         // Update input placeholder based on platform
         if (e.target.value === 'eh') {
           setI18nPlaceholder(input, 'search.input_eh');
@@ -917,6 +940,35 @@ function initApp() {
         }
       }
     });
+  });
+
+  // ============================================
+  //  Jelly Tracker Sync (Unified for Platform and Transfer)
+  // ============================================
+  function syncJellyTracker(container) {
+    if (!container) return;
+    const tracker = container.querySelector('.jelly-tracker');
+    const activeItem = container.querySelector('.active');
+    
+    if (tracker && activeItem && activeItem.offsetWidth > 0) {
+      tracker.style.transform = `translate(${activeItem.offsetLeft}px, ${activeItem.offsetTop}px)`;
+      tracker.style.width = `${activeItem.offsetWidth}px`;
+      tracker.style.height = `${activeItem.offsetHeight}px`;
+    }
+  }
+
+  // Setup ResizeObserver to track layout reflows (e.g. window resize or button wraps)
+  const jellyObserver = new ResizeObserver((entries) => {
+    for (let entry of entries) {
+      syncJellyTracker(entry.target);
+    }
+  });
+
+  // Observe all containers with jelly trackers
+  document.querySelectorAll('.platform-toggle, .transfer-tabs').forEach(container => {
+    jellyObserver.observe(container);
+    // Initial sync
+    requestAnimationFrame(() => requestAnimationFrame(() => syncJellyTracker(container)));
   });
 
   // ============================================
