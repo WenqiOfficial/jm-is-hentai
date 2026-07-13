@@ -100,20 +100,6 @@ Through your deployed Worker proxy, you can call the following APIs (see `START.
 
 ---
 
-## 🌟 Star History
-
-<div align="center">
-  <a href="https://star-history.com/#WenqiOfficial/jm-is-hentai&Date">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=WenqiOfficial/jm-is-hentai&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=WenqiOfficial/jm-is-hentai&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=WenqiOfficial/jm-is-hentai&type=Date" />
-    </picture>
-  </a>
-</div>
-
----
-
 ## 💖 Contributors
 
 Thanks to everyone who contributed to this project!
@@ -131,6 +117,12 @@ Thanks to everyone who contributed to this project!
 Issues and Pull Requests are welcome to help improve features and fix bugs.
 
 This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🌟 Star History
+
+[![Star History Chart](https://api.star-history.com/chart?repos=WenqiOfficial/jm-is-hentai&type=date&legend=top-left&sealed_token=s5bjTRS4fzuiKdE9McWv7GgHfpP5v0ns195NPPrZD144zB0zI-iqBkLTjXJezIQN2g5NBbq2imX46go3eMQuBSj8lMw2ChQ2Nxo5uFx_Jb8HleP7hRgUuw)](https://www.star-history.com/?type=date&repos=WenqiOfficial%2Fjm-is-hentai)
 
 <p align="right">
   <i>✨ Developed with the assistance of Gemini</i>

@@ -100,11 +100,6 @@ npm run worker:deploy
 
 ---
 
-## 🌟 Star 历史
-
-[![Star History Chart](https://api.star-history.com/chart?repos=WenqiOfficial/jm-is-hentai&type=date&legend=top-left&sealed_token=s5bjTRS4fzuiKdE9McWv7GgHfpP5v0ns195NPPrZD144zB0zI-iqBkLTjXJezIQN2g5NBbq2imX46go3eMQuBSj8lMw2ChQ2Nxo5uFx_Jb8HleP7hRgUuw)](https://www.star-history.com/?type=date&repos=WenqiOfficial%2Fjm-is-hentai)
----
-
 ## 💖 贡献者名单
 
 感谢所有为本项目做出贡献的开发者！
@@ -123,6 +118,14 @@ npm run worker:deploy
 
 本项目基于 [MIT License](LICENSE) 协议开源。
 
+---
+
+## 🌟 Star 历史
+
+[![Star History Chart](https://api.star-history.com/chart?repos=WenqiOfficial/jm-is-hentai&type=date&legend=top-left&sealed_token=s5bjTRS4fzuiKdE9McWv7GgHfpP5v0ns195NPPrZD144zB0zI-iqBkLTjXJezIQN2g5NBbq2imX46go3eMQuBSj8lMw2ChQ2Nxo5uFx_Jb8HleP7hRgUuw)](https://www.star-history.com/?type=date&repos=WenqiOfficial%2Fjm-is-hentai)
+
 <p align="right">
   <i>✨ 本项目借助 Gemini 辅助开发</i>
 </p>
+
+
