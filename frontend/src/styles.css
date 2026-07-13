@@ -5,9 +5,9 @@
 /* === Font Definitions === */
 @font-face {
   font-family: 'KeinannMaruPOP';
-  src: url('./font/KeinannMaruPOP.woff2') format('woff2'),
-       url('./font/KeinannMaruPOP.woff') format('woff'),
-       url('./font/KeinannMaruPOP.ttf') format('truetype');
+  src: url('../font/KeinannMaruPOP.woff2') format('woff2'),
+    url('../font/KeinannMaruPOP.woff') format('woff'),
+    url('../font/KeinannMaruPOP.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -15,9 +15,9 @@
 
 @font-face {
   font-family: 'KeinannMaruPOP-JP';
-  src: url('./font/KeinannMaruPOPjp.woff2') format('woff2'),
-       url('./font/KeinannMaruPOPjp.woff') format('woff'),
-       url('./font/KeinannMaruPOPjp.ttf') format('truetype');
+  src: url('../font/KeinannMaruPOPjp.woff2') format('woff2'),
+    url('../font/KeinannMaruPOPjp.woff') format('woff'),
+    url('../font/KeinannMaruPOPjp.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
