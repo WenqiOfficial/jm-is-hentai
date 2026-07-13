@@ -14,7 +14,7 @@
     "proxy",
     "converter"
   ],
-  "author": "OrPudding",
+  "author": "WenqiOfficial",
   "license": "MIT",
   "dependencies": {
     "crypto-js": "^4.2.0"
