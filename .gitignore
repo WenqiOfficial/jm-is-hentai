@@ -137,3 +137,5 @@ dist
 /dist
 /.wrangler
 /dev_docs
+/.agents
+skills-lock.json
