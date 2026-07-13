@@ -90,7 +90,7 @@ export function t(key, params) {
   let text = translations[currentLang]?.[key] || translations['en']?.[key] || key;
   if (params && typeof text === 'string') {
     Object.keys(params).forEach(p => {
-      text = text.replace(new RegExp(`\\{${p}\\}`, 'g'), params[p]);
+      text = text.replace(new RegExp(`\\{${p}\\}`, 'g'), () => params[p]);
     });
   }
   return text;

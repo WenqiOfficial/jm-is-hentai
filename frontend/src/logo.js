@@ -71,10 +71,6 @@ export function initLogoInteractivity() {
 
     // Capture the initial layout offset to seamlessly connect the background gradient
     requestAnimationFrame(() => {
-      entities.forEach(ent => {
-        if (ent.isText) ent.baseBgX = -ent.el.offsetLeft;
-      });
-      
       // HYDRATION: If we are centering (initial load or language switch), forcefully set new entities to the center so they can fly back smoothly!
       if (isCentering) {
         entities.forEach(ent => {
@@ -157,11 +153,6 @@ export function initLogoInteractivity() {
       c.y += c.vy;
       
       c.el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
-      
-      // Animate background flow for texts
-      if (c.isText && c.baseBgX !== undefined) {
-        c.el.style.backgroundPosition = `${c.baseBgX - time * 0.05}px 50%`;
-      }
     }
     requestAnimationFrame(loop);
   };
