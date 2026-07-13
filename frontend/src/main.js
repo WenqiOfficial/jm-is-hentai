@@ -1,7 +1,7 @@
 import { fetchAlbumInfo } from './jmcomic.js';
 import { WebGLBackground } from './webgl-background.js';
 import { getTransferTargets, searchEhentai, fetchEhentaiGallery } from './transfer.js';
-import { initI18n, t, getCurrentLang } from './i18n.js';
+import { initI18n, t, getCurrentLang, setI18nText, setI18nPlaceholder, I18nError } from './i18n.js';
 import { translateTag, checkAndUpdateTags } from './tag-translator.js';
 import { initLogoInteractivity, setLogoCentered } from './logo.js';
 import { showToast } from './toast.js';
@@ -106,7 +106,7 @@ function initApp() {
   /** Platform-specific display configuration */
   const PLATFORM_CONFIG = {
     jm: {
-      getAuthor: (album) => `${t('comic.author')}: ${(album.author || []).join(', ') || t('comic.unknown', '未知')}`,
+      getAuthor: (album) => `${t('comic.author')}: ${(album.author || []).join(', ') || t('comic.unknown')}`,
       getTitle: (album, query) => album.name || `JMComic - ${query}`,
       getLinkIcon: 'fa-solid fa-book-open',
       getLinkText: () => t('comic.read_jm'),
@@ -124,7 +124,7 @@ function initApp() {
    */
   function setupCopyOnClick(element, textToCopy) {
     element.classList.add('copyable');
-    element.title = t('action.click_to_copy') || 'Click to copy';
+    element.title = t('action.click_to_copy');
     element.addEventListener('click', () => {
       // Don't trigger copy if the user is highlighting text
       if (window.getSelection().toString().trim() !== '') return;
@@ -133,9 +133,9 @@ function initApp() {
       if (!text) return;
       
       navigator.clipboard.writeText(text).then(() => {
-        showToast((t('alert.copy_success') || 'Copied: ') + text, 'success');
+        showToast(t('alert.copy_success', { text }), 'success');
       }).catch(err => {
-        showToast('Copy failed', 'error');
+        showToast(t('alert.copy_failed'), 'error');
       });
     });
   }
@@ -164,6 +164,9 @@ function initApp() {
   }
 
   window.addEventListener('languageChanged', (e) => {
+    // Clear cache so that dynamically translated synthetic search results (e.g., nHentai) are regenerated
+    transferCache = {};
+
     if (!currentAlbumData || comicInfo.style.display === 'none') return;
     const config = PLATFORM_CONFIG[currentPlatformState];
     if (!config) return;
@@ -369,7 +372,7 @@ function initApp() {
       if (displayImg.src !== proxyImgUrl) {
         displayImg.src = proxyImgUrl;
       } else {
-        visualContent.innerHTML = `<span><i class="fa-solid fa-image-slash"></i> ${t('comic.no_cover')}</span>`;
+        visualContent.innerHTML = `<span><i class="fa-solid fa-image-slash"></i> <span data-i18n="comic.no_cover">${t('comic.no_cover')}</span></span>`;
         visualContent.classList.add('placeholder');
         document.documentElement.style.removeProperty('--primary-color');
         document.documentElement.style.removeProperty('--primary-btn');
@@ -404,13 +407,11 @@ function initApp() {
         
         const text = document.createElement('div');
         text.className = 'nsfw-text';
-        text.textContent = t('nsfw.risky');
-        text.setAttribute('data-i18n', 'nsfw.risky');
+        setI18nText(text, 'nsfw.risky');
         
         const btn = document.createElement('button');
         btn.className = 'nsfw-btn';
-        btn.textContent = t('nsfw.view');
-        btn.setAttribute('data-i18n', 'nsfw.view');
+        setI18nText(btn, 'nsfw.view');
         
         btn.onclick = () => {
           displayImg.classList.remove('nsfw-blurred');
@@ -480,15 +481,15 @@ function initApp() {
     const currentPlatform = document.querySelector('input[name="platform"]:checked')?.value || 'jm';
     let query = input.value.trim();
 
-    if (currentPlatform === 'jm') {
+      if (currentPlatform === 'jm') {
       query = query.replace(/\D/g, '');
       if (!query) {
-        showError(t('alert.empty_jm'));
+        showError(new I18nError('alert.empty_jm'));
         return;
       }
     } else {
       if (!query) {
-        showError(t('alert.empty_eh'));
+        showError(new I18nError('alert.empty_eh'));
         return;
       }
     }
@@ -517,7 +518,7 @@ function initApp() {
         if (searchId !== currentSearchId) return; // Discard if overridden
 
         if (!results || results.length === 0) {
-          throw new Error(t('alert.no_eh_gallery'));
+          throw new I18nError('alert.no_eh_gallery');
         }
 
         const baseAlbum = results[0];
@@ -546,14 +547,19 @@ function initApp() {
       }
     } catch (err) {
       if (searchId !== currentSearchId) return; // Discard if overridden
-      smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, comicInfo], errorMsg, 'block');
-      errorMsg.textContent = err.message;
+      showError(err);
     }
   };
 
-  const showError = (msg) => {
+  const showError = (err) => {
     resultContainer.style.display = 'block';
-    errorMsg.textContent = msg;
+    if (err instanceof I18nError) {
+      setI18nText(errorMsg, err.i18nKey, err.i18nParams);
+    } else {
+      errorMsg.removeAttribute('data-i18n');
+      errorMsg.removeAttribute('data-i18n-params');
+      errorMsg.textContent = err.message || err;
+    }
     smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, comicInfo], errorMsg, 'block');
   };
 
@@ -754,8 +760,7 @@ function initApp() {
       // Show loading
       await smoothStateSwitch(transferContent, ALL_STATES, transferLoading, 'flex');
 
-      let found = false;
-      let lastErrorStr = null;
+      let lastError = null;
       try {
         const results = await target.searchFn(comicTitle);
         transferCache[cacheKey] = results;
@@ -769,17 +774,23 @@ function initApp() {
         }
       } catch (err) {
         console.warn('Transfer search error:', err);
-        lastErrorStr = err.message || String(err);
+        lastError = err;
       }
 
       // If we reach here, the search returned 0 results or errored
       if (i < candidates.length - 1) {
         // We have more candidates to try, show a brief message before continuing
-        if (lastErrorStr) {
-          transferErrorMsg.textContent = lastErrorStr;
+        if (lastError) {
+          if (lastError instanceof I18nError) {
+            setI18nText(transferErrorMsg, lastError.i18nKey, lastError.i18nParams);
+          } else {
+            transferErrorMsg.removeAttribute('data-i18n');
+            transferErrorMsg.removeAttribute('data-i18n-params');
+            transferErrorMsg.textContent = lastError.message || lastError;
+          }
           await smoothStateSwitch(transferContent, ALL_STATES, transferError, 'flex');
         } else {
-          transferEmpty.querySelector('p').textContent = t('alert.auto_empty');
+          setI18nText(transferEmpty.querySelector('p'), 'alert.auto_empty');
           await smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
         }
         
@@ -791,8 +802,14 @@ function initApp() {
         if (activeTransferTab !== tabId) return;
       } else {
         // Last iteration
-        if (lastErrorStr) {
-          transferErrorMsg.textContent = lastErrorStr;
+        if (lastError) {
+          if (lastError instanceof I18nError) {
+            setI18nText(transferErrorMsg, lastError.i18nKey, lastError.i18nParams);
+          } else {
+            transferErrorMsg.removeAttribute('data-i18n');
+            transferErrorMsg.removeAttribute('data-i18n-params');
+            transferErrorMsg.textContent = lastError.message || lastError;
+          }
           await smoothStateSwitch(transferContent, ALL_STATES, transferError, 'flex');
           return; // Prevent showing empty
         }
@@ -801,7 +818,7 @@ function initApp() {
     
     // If all candidates failed or returned 0 results (and no error on the last candidate)
     if (activeTransferTab === tabId) {
-      transferEmpty.querySelector('p').textContent = t('transfer.empty');
+      setI18nText(transferEmpty.querySelector('p'), 'transfer.empty');
       smoothStateSwitch(transferContent, ALL_STATES, transferEmpty, 'flex');
     }
   }
@@ -862,7 +879,13 @@ function initApp() {
       info.className = 'transfer-result-info';
       const title = document.createElement('div');
       title.className = 'transfer-result-title';
-      title.textContent = item.title || item.name || 'Untitled';
+      if (item.title || item.name) {
+        title.textContent = item.title || item.name;
+        title.removeAttribute('data-i18n');
+        title.removeAttribute('data-i18n-params');
+      } else {
+        setI18nText(title, 'comic.untitled');
+      }
       info.appendChild(title);
       a.appendChild(info);
 
@@ -888,11 +911,9 @@ function initApp() {
         e.target.parentElement.classList.add('active');
         // Update input placeholder based on platform
         if (e.target.value === 'eh') {
-          input.placeholder = t('search.input_eh');
-          input.setAttribute('data-i18n-placeholder', 'search.input_eh');
+          setI18nPlaceholder(input, 'search.input_eh');
         } else {
-          input.placeholder = t('search.input_jm');
-          input.setAttribute('data-i18n-placeholder', 'search.input_jm');
+          setI18nPlaceholder(input, 'search.input_jm');
         }
       }
     });

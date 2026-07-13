@@ -41,5 +41,18 @@
   "footer.no_tracking": "This site does not provide or store any information, all content is provided by third-party websites",
   "settings.auto_blur": "NSFW Audit",
   "nsfw.risky": "Potential risky content",
-  "nsfw.view": "View Image"
+  "nsfw.view": "View Image",
+  "action.click_to_copy": "Click to copy",
+  "alert.copy_success": "Copied: {text}",
+  "alert.copy_failed": "Copy failed",
+  "comic.untitled": "Untitled",
+  "transfer.error_default": "Request Failed",
+  "transfer.search_in_nhentai": "Search in nHentai for \"{query}\"",
+  "error.proxy_failed": "Proxy request failed: {status}",
+  "error.proxy_not_json": "Proxy returned non-JSON content (may be intercepted or invalid Token)",
+  "error.fetch_failed": "Failed to fetch data: {message}",
+  "error.direct_fetch_failed": "Direct request failed (check CORS): {message}",
+  "error.all_domains_failed": "All fallback domains failed",
+  "error.gallery_api": "Gallery API returned error",
+  "app.description": "Hentai Station - JMComic ID Search Tool, quick comic info lookup"
 }

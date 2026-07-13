@@ -7,7 +7,7 @@
   <meta name="description" content="Hentai车站 — JMComic 编号检索工具，快速查询漫画信息">
   <title>Hentai车站</title>
   <link rel="icon" href="./favicon.ico" type="image/x-icon">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.font.im/css2?family=Fredoka:wght@600&family=M+PLUS+Rounded+1c:wght@400;700&display=swap">
   <link rel="stylesheet" href="https://cdnjs.snrat.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="./src/toast.css">
   <link rel="stylesheet" href="./src/footer.css">
@@ -207,7 +207,7 @@
 
             <div class="transfer-error fade-element" id="transfer-error" style="display: none;">
               <i class="fa-solid fa-triangle-exclamation"></i>
-              <p id="transfer-error-msg">请求失败</p>
+              <p id="transfer-error-msg" data-i18n="transfer.error_default">请求失败</p>
             </div>
 
             <div class="transfer-coming-soon fade-element" id="transfer-coming-soon" style="display: none;">
@@ -231,7 +231,7 @@
 
   <script src="https://cdnjs.snrat.com/ajax/libs/node-vibrant/3.1.6/vibrant.min.js"></script>
   <!-- OpenCC for Traditional to Simplified Tag Conversion -->
-  <script src="https://cdn.jsdelivr.net/npm/opencc-js/dist/umd/t2cn.js"></script>
+  <script src="https://cdn.jsdmirror.com/npm/opencc-js/dist/umd/t2cn.js"></script>
   <script type="module" src="./src/main.js"></script>
   <script type="module" src="./src/footer.js"></script>
 </body>

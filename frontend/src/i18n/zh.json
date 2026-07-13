@@ -41,5 +41,18 @@
   "footer.no_tracking": "本网站不提供也不存储任何信息，内容均由其余网站提供",
   "settings.auto_blur": "NSFW 审计",
   "nsfw.risky": "潜在的风险内容",
-  "nsfw.view": "查看图片"
+  "nsfw.view": "查看图片",
+  "action.click_to_copy": "点击复制",
+  "alert.copy_success": "复制成功: {text}",
+  "alert.copy_failed": "复制失败",
+  "comic.untitled": "未知标题",
+  "transfer.error_default": "请求失败",
+  "transfer.search_in_nhentai": "在 nHentai 中搜索 \"{query}\"",
+  "error.proxy_failed": "请求代理失败: {status}",
+  "error.proxy_not_json": "代理返回了非 JSON 内容 (可能是被拦截或 Token 无效)",
+  "error.fetch_failed": "获取数据失败: {message}",
+  "error.direct_fetch_failed": "直连请求失败(请检查跨域): {message}",
+  "error.all_domains_failed": "所有备用域名均请求失败",
+  "error.gallery_api": "画廊 API 返回错误",
+  "app.description": "Hentai车站 — JMComic 编号检索工具，快速查询漫画信息"
 }

@@ -4,6 +4,7 @@ import {
   decodeJsonData,
   fetchLatestApiSources
 } from '../../shared/crypto.js';
+import { t, I18nError } from './i18n.js';
 
 // Re-export for any consumers that import from here
 export { FALLBACK_API_SOURCES };
@@ -21,7 +22,7 @@ export async function fetchAlbumInfo(jmId, mode = 'api') {
       }
     });
     if (!response.ok) {
-      throw new Error(`请求代理失败: ${response.status}`);
+      throw new I18nError('error.proxy_failed', { status: response.status });
     }
     const resText = await response.text();
     let resJson;
@@ -29,10 +30,10 @@ export async function fetchAlbumInfo(jmId, mode = 'api') {
       resJson = JSON.parse(resText);
     } catch (e) {
       console.error('Proxy response parse error:', resText.substring(0, 100));
-      throw new Error('代理返回了非 JSON 内容 (可能是被拦截或 Token 无效)');
+      throw new I18nError('error.proxy_not_json');
     }
     
-    if (resJson.code !== 200) throw new Error(`获取数据失败: ${resJson.message || resJson.code}`);
+    if (resJson.code !== 200) throw new I18nError('error.fetch_failed', { message: resJson.message || resJson.code });
     return resJson.data; // Worker returns decrypted plain JSON data directly
   } else {
     // Direct frontend fetch (Requires CORS extension)
@@ -64,6 +65,7 @@ export async function fetchAlbumInfo(jmId, mode = 'api') {
         continue;
       }
     }
-    throw new Error(lastError ? `直连请求失败(请检查跨域): ${lastError.message}` : '所有备用域名均请求失败');
+    if (lastError) throw new I18nError('error.direct_fetch_failed', { message: lastError.message });
+    throw new I18nError('error.all_domains_failed');
   }
 }

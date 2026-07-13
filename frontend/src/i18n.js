@@ -94,12 +94,19 @@ function detectLanguage() {
 }
 
 /**
- * Get translated string
- * @param {string} key 
+ * Get translated string with optional placeholder interpolation
+ * @param {string} key - The translation key
+ * @param {Object} [params] - Key-value pairs for `{placeholder}` replacement
  * @returns {string}
  */
-export function t(key) {
-  return translations[currentLang]?.[key] || translations['en']?.[key] || key;
+export function t(key, params) {
+  let text = translations[currentLang]?.[key] || translations['en']?.[key] || key;
+  if (params && typeof text === 'string') {
+    Object.keys(params).forEach(p => {
+      text = text.replace(new RegExp(`\\{${p}\\}`, 'g'), params[p]);
+    });
+  }
+  return text;
 }
 
 /**
@@ -110,7 +117,12 @@ export function applyTranslations() {
   document.documentElement.lang = currentLang;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    const translated = t(key);
+    const paramsStr = el.getAttribute('data-i18n-params');
+    let params = undefined;
+    if (paramsStr) {
+      try { params = JSON.parse(paramsStr); } catch(e) {}
+    }
+    const translated = t(key, params);
 
     // If the element has child elements (e.g., <i> icon + text),
     // only update the last text node to preserve the icon.
@@ -131,4 +143,60 @@ export function applyTranslations() {
     const key = el.getAttribute('data-i18n-placeholder');
     el.setAttribute('placeholder', t(key));
   });
+
+  document.title = t('app.title');
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) {
+    metaDesc.setAttribute('content', t('app.description'));
+  }
+}
+
+/**
+ * Helper to dynamically bind a translation key and params to a DOM element.
+ * It sets the data attributes so i18n can automatically track it, and updates the text immediately.
+ * @param {HTMLElement} el 
+ * @param {string} key 
+ * @param {Object} [params] 
+ */
+export function setI18nText(el, key, params) {
+  el.setAttribute('data-i18n', key);
+  if (params) {
+    el.setAttribute('data-i18n-params', JSON.stringify(params));
+  } else {
+    el.removeAttribute('data-i18n-params');
+  }
+  
+  const translated = t(key, params);
+  if (el.children.length > 0) {
+    const lastChild = el.lastChild;
+    if (lastChild && lastChild.nodeType === Node.TEXT_NODE) {
+      lastChild.textContent = ' ' + translated;
+    } else {
+      el.appendChild(document.createTextNode(' ' + translated));
+    }
+  } else {
+    el.textContent = translated;
+  }
+}
+
+/**
+ * Helper to dynamically set a placeholder translation
+ * @param {HTMLInputElement} el 
+ * @param {string} key 
+ */
+export function setI18nPlaceholder(el, key) {
+  el.setAttribute('data-i18n-placeholder', key);
+  el.setAttribute('placeholder', t(key));
+}
+
+/**
+ * Standardized I18n Error for decoupled error throwing
+ */
+export class I18nError extends Error {
+  constructor(key, params) {
+    super(t(key, params)); // Maintain standard message for debugging/fallback
+    this.name = 'I18nError';
+    this.i18nKey = key;
+    this.i18nParams = params;
+  }
 }

@@ -41,5 +41,18 @@
   "footer.no_tracking": "当サイトはいかなる情報も提供および保存しません。すべてのコンテンツは他のウェブサイトから提供されています",
   "settings.auto_blur": "NSFW監査",
   "nsfw.risky": "潜在的なリスクコンテンツ",
-  "nsfw.view": "画像を表示"
+  "nsfw.view": "画像を表示",
+  "action.click_to_copy": "クリックしてコピー",
+  "alert.copy_success": "コピーしました: {text}",
+  "alert.copy_failed": "コピーに失敗しました",
+  "comic.untitled": "タイトルなし",
+  "transfer.error_default": "リクエスト失敗",
+  "transfer.search_in_nhentai": "nHentaiで \"{query}\" を検索",
+  "error.proxy_failed": "プロキシリクエスト失敗: {status}",
+  "error.proxy_not_json": "プロキシが非JSONコンテンツを返しました（傍受されたか、無効なトークンです）",
+  "error.fetch_failed": "データの取得に失敗しました: {message}",
+  "error.direct_fetch_failed": "直接リクエスト失敗（CORSを確認してください）: {message}",
+  "error.all_domains_failed": "すべての代替ドメインが失敗しました",
+  "error.gallery_api": "ギャラリー API がエラーを返しました",
+  "app.description": "Hentaiステーション — JMComic ID検索ツール、漫画情報を素早く検索"
 }

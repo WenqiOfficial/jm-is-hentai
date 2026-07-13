@@ -3,6 +3,7 @@
  * 
  * Searches sibling platforms based on a comic's title/author.
  */
+import { t, I18nError } from './i18n.js';
 
 /**
  * Search E-Hentai via Worker proxy.
@@ -32,7 +33,7 @@ export async function fetchEhentaiGallery(gid, token) {
   if (!gid || !token) return null;
   try {
     const res = await fetch(`/api/ehentai/gallery?gid=${gid}&token=${token}`);
-    if (!res.ok) throw new Error('Gallery API returned error');
+    if (!res.ok) throw new I18nError('error.gallery_api');
     const data = await res.json();
     return data.gallery || null;
   } catch (err) {
@@ -70,7 +71,7 @@ export async function searchNhentai(query) {
   return [
     {
       id: query,
-      title: `在 nHentai 中搜索 "${query}"`,
+      title: t('transfer.search_in_nhentai', { query }),
       author: 'nHentai',
       url: `https://nhentai.net/search/?q=${encodeURIComponent(query)}`,
       thumbnail: ''
