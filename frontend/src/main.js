@@ -72,7 +72,6 @@ function initApp() {
 
   // Initialize new modules
   const { triggerTransfer } = initTransferPanel();
-  initJellyTrackers();
 
   // Add specific listener for input placeholder side-effect
   document.querySelectorAll('.platform-toggle').forEach(el => {
@@ -109,6 +108,8 @@ function initApp() {
   } else {
     setI18nPlaceholder(input, 'search.input_jm');
   }
+
+  initJellyTrackers();
 
   // ============================================
   //  Shared UI Helpers (DRY)
