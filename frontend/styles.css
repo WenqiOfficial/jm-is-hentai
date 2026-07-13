@@ -56,37 +56,16 @@
   --input-border: rgba(255, 255, 255, 0.6);
   --input-border-hover: rgba(255, 255, 255, 1);
 
+  --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
   /* Smooth 1.5s transition for @property-registered colors */
   transition: --primary-color 1.5s ease,
               --secondary-color 1.5s ease,
               --accent-color 1.5s ease;
 }
 
-/* 暂时隐藏深色模式
-[data-theme="dark"] {
-  --bg-color: #0b0f19;
-  --text-dark: #f8fafc;
-  --text-light: #94a3b8;
 
-  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-surface: rgba(0, 0, 0, 0.4);
-  --glass-surface-hover: rgba(0, 0, 0, 0.6);
-  
-  --input-bg: rgba(0, 0, 0, 0.5);
-  --input-bg-focus: rgba(0, 0, 0, 0.7);
-  --input-border: rgba(255, 255, 255, 0.15);
-  --input-border-hover: rgba(255, 255, 255, 0.3);
-  
-  --primary-color: #79A3DB; 
-  --secondary-color: #D3A5D3;
-  --accent-color: #D1D487;
-}
-
-[data-theme="dark"] .background-container {
-  filter: brightness(0.35) saturate(0.8);
-}
-*/
 
 .global-mask {
   position: fixed;
@@ -128,6 +107,32 @@ body {
   -webkit-user-select: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================
+   Hardware Acceleration Anti-Blur Fixes
+   =========================================
+   Prevents text from becoming blurry or shifting weight when GPU layers 
+   are created for CSS transitions/animations (like scale, rotate, translateY).
+*/
+.icon-btn,
+.primary-btn,
+.platform-btn,
+.jelly-btn,
+.tag,
+.comic-card,
+.transfer-card,
+.transfer-result-item,
+.logo-letter,
+.logo-img,
+.copyable {
+  /* Enforce 3D context to prevent subpixel shifting */
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Hardware accelerate by default to prevent rasterization swapping on hover */
+  /* We use a tiny translateZ(0) trick to promote to GPU layer gracefully */
+  outline: 1px solid transparent; /* Edge hack for jagged text */
 }
 
 /* Japanese typography prioritization */
@@ -309,7 +314,7 @@ body.mask-active .menu-toggle {
   cursor: pointer;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.3s var(--spring-easing);
 }
 
 .icon-btn:hover {
@@ -344,7 +349,7 @@ body.mask-active .menu-toggle {
   transform: scale(1) translateY(0);
   pointer-events: auto;
   transition: opacity 0.35s ease,
-              transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              transform 0.35s var(--spring-easing),
               visibility 0.35s;
 }
 
@@ -402,7 +407,7 @@ body.mask-active .menu-toggle {
   background: var(--primary-btn, var(--primary-color));
   border-radius: 8px;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-btn, var(--primary-color)) 40%, transparent);
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.35s var(--spring-easing);
   z-index: -1;
   pointer-events: none;
 }
@@ -485,7 +490,7 @@ body.mask-active .menu-toggle {
   background: var(--glass-surface);
   border: 1px solid var(--glass-border);
   border-radius: 24px;
-  transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: 0.3s var(--spring-easing);
 }
 
 .switch-slider:before {
@@ -497,7 +502,7 @@ body.mask-active .menu-toggle {
   bottom: 2px;
   background: white;
   border-radius: 50%;
-  transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: 0.3s var(--spring-easing);
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
@@ -588,7 +593,7 @@ body.mask-active .menu-toggle {
   object-fit: cover;
   object-position: top center; /* Better framing for character art */
   image-rendering: -webkit-optimize-contrast; /* Helps with stretched E-Hentai thumbnails */
-  animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUpFade 0.8s var(--ease-out-expo) forwards;
 }
 
 /* NSFW Auto-Blur Elements */
@@ -654,7 +659,7 @@ body.mask-active .menu-toggle {
   justify-content: center;
   gap: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+  transition: transform 0.2s var(--spring-easing),
               background 0.3s ease,
               box-shadow 0.3s ease;
 }
@@ -757,7 +762,7 @@ body.mask-active .menu-toggle {
   border-radius: 25px;
   font-size: 16px;
   font-family: inherit;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.4s var(--spring-easing);
 }
 
 .platform-btn input {
@@ -819,7 +824,7 @@ body.mask-active .menu-toggle {
   position: relative;
   overflow: hidden;
   /* Elastic hover + smooth background */
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+  transition: transform 0.2s var(--spring-easing),
               background 0.3s ease;
 }
 
@@ -835,7 +840,7 @@ body.mask-active .menu-toggle {
 
 /* Bounce animation class (added/removed by JS on click) */
 .jelly-btn.bounce {
-  animation: jellyBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: jellyBounce 0.6s var(--spring-easing);
 }
 
 .jelly-btn.small {
@@ -863,7 +868,7 @@ body.mask-active .menu-toggle {
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.4s ease,
-              transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+              transform 0.4s var(--spring-easing);
 }
 
 .fade-element.fade-in {
@@ -963,7 +968,7 @@ body.mask-active .menu-toggle {
 /* Mobile: stack below operation area */
 @media (max-width: 1023px) {
   .transfer-area {
-    animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: slideUpFade 0.5s var(--ease-out-expo) both;
     margin-top: 20px;
   }
 }
@@ -1053,7 +1058,7 @@ body.mask-active .menu-toggle {
   text-decoration: none;
   color: var(--text-dark);
   transition: all 0.25s ease;
-  animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: slideUpFade 0.35s var(--ease-out-expo) both;
 }
 
 .transfer-result-item:hover {
@@ -1101,7 +1106,18 @@ body.mask-active .menu-toggle {
   color: var(--primary-color);
 }
 
-
+/* Copyable Text Interaction */
+.copyable {
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  user-select: text; /* Allow normal text selection */
+}
+.copyable:hover {
+  opacity: 0.75;
+}
+.copyable:active {
+  transform: scale(0.98);
+}
 
 /* ===== Footer ===== */
 .footer {

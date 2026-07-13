@@ -4,6 +4,7 @@ import { getTransferTargets, searchEhentai, fetchEhentaiGallery } from './transf
 import { initI18n, t, getCurrentLang } from './i18n.js';
 import { translateTag, checkAndUpdateTags } from './tag-translator.js';
 import { initLogoInteractivity, setLogoCentered } from './logo.js';
+import { showToast } from './toast.js';
 import no18Icon from '../image/no18.png';
 
 let settingsPanelWasOpen = false;
@@ -91,9 +92,12 @@ function initApp() {
       const span = document.createElement('span');
       span.className = 'tag';
       span.textContent = translateTag(tag, lang);
+      
+      setupCopyOnClick(span, span.textContent);
+
       if (lang === 'zh') span.title = tag;
       if (animate) {
-        span.style.animation = `tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both`;
+        span.style.animation = `tagPop 0.35s var(--spring-easing) ${index * 0.05}s backwards`;
       }
       comicTags.appendChild(span);
     });
@@ -116,6 +120,27 @@ function initApp() {
   };
 
   /**
+   * Utility: Add one-click copy functionality to an element without breaking text selection.
+   */
+  function setupCopyOnClick(element, textToCopy) {
+    element.classList.add('copyable');
+    element.title = t('action.click_to_copy') || 'Click to copy';
+    element.addEventListener('click', () => {
+      // Don't trigger copy if the user is highlighting text
+      if (window.getSelection().toString().trim() !== '') return;
+      
+      const text = typeof textToCopy === 'function' ? textToCopy() : textToCopy;
+      if (!text) return;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        showToast((t('alert.copy_success') || 'Copied: ') + text, 'success');
+      }).catch(err => {
+        showToast('Copy failed', 'error');
+      });
+    });
+  }
+
+  /**
    * Populate the comic info panel. Extracted to eliminate 2x duplication.
    * @param {string} platform - 'jm' or 'eh'
    * @param {Object} album - Album data object
@@ -128,6 +153,11 @@ function initApp() {
 
     comicTitle.textContent = config.getTitle(album, query);
     comicAuthor.textContent = config.getAuthor(album);
+    
+    // Attach one-click copy
+    setupCopyOnClick(comicTitle, comicTitle.textContent);
+    setupCopyOnClick(comicAuthor, comicAuthor.textContent);
+
     renderTags(album.tags || [], lang, true);
     jmLink.href = linkHref;
     jmLink.innerHTML = `<i class="${config.getLinkIcon}"></i> ${config.getLinkText()}`;
@@ -145,8 +175,6 @@ function initApp() {
 
   // ============================================
   //  Fade Transition Helpers
-  //  Replaces hard display:none switching with
-  //  smooth opacity + translateY transitions.
   // ============================================
 
   /**
@@ -175,7 +203,6 @@ function initApp() {
     if (el.style.display === 'none') return;
     el.classList.remove('fade-in');
 
-    // Use transitionend to sync with CSS instead of hardcoded timeout
     const onEnd = () => {
       el.removeEventListener('transitionend', onEnd);
       if (!el.classList.contains('fade-in')) {
@@ -184,7 +211,6 @@ function initApp() {
     };
     el.addEventListener('transitionend', onEnd, { once: true });
 
-    // Safety fallback in case transitionend never fires (e.g., display:none race)
     el._fadeTimer = setTimeout(onEnd, 500);
   }
 
@@ -193,18 +219,16 @@ function initApp() {
    * @param {HTMLElement} container - The wrapper element whose height will be morphed.
    * @param {HTMLElement[]} outgoingElements - Elements to fade out and hide.
    * @param {HTMLElement} incomingElement - The new element to show.
-   * @param {string} displayMode - The display type for incoming element (default 'block').
+   * @param {string} displayMode - The display type for incoming element (default 'block')
    */
   async function smoothStateSwitch(container, outgoingElements, incomingElement, displayMode = 'block') {
     if (!container) return;
     
-    // 1. Lock current height
     const currentHeight = container.offsetHeight;
     container.style.height = currentHeight + 'px';
     container.style.overflow = 'hidden';
     container.style.transition = 'height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
 
-    // 2. Fade out old elements
     let hasOutgoing = false;
     outgoingElements.forEach(el => {
       if (el && el.style.display !== 'none' && el.classList.contains('fade-in')) {
@@ -217,14 +241,12 @@ function initApp() {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    // 3. Hide old elements
     outgoingElements.forEach(el => {
       if (el) el.style.display = 'none';
     });
     
     let targetHeight = 0;
     if (incomingElement) {
-      // Show incoming element invisibly to measure its height
       incomingElement.style.display = displayMode;
       incomingElement.style.opacity = '0';
       incomingElement.style.position = 'absolute';
@@ -237,16 +259,13 @@ function initApp() {
       incomingElement.style.width = '';
     }
 
-    // 4. Animate container height to target
     container.style.height = targetHeight + 'px';
 
     if (incomingElement) {
-      // Force reflow and fade in
       void incomingElement.offsetWidth;
       incomingElement.classList.add('fade-in');
     }
 
-    // 5. Cleanup after transition completes (use transitionend with safety fallback)
     const cleanup = () => {
       container.style.height = '';
       container.style.overflow = '';
@@ -255,7 +274,7 @@ function initApp() {
     container.addEventListener('transitionend', (e) => {
       if (e.propertyName === 'height') cleanup();
     }, { once: true });
-    setTimeout(cleanup, 500); // Safety fallback
+    setTimeout(cleanup, 500);
   }
 
   // ============================================
@@ -270,7 +289,7 @@ function initApp() {
   if (!prefersReducedMotion) {
     webglBg = new WebGLBackground(bgContainer);
     if (!webglBg.initialized) {
-      webglBg = null; // CSS fallback gradient stays visible
+      webglBg = null;
     }
   }
 
@@ -281,42 +300,11 @@ function initApp() {
   const settingsBtn = document.getElementById('settings-btn');
   const settingsPanel = document.getElementById('settings-panel');
   
-  /* --- 暂时隐藏深色模式逻辑 ---
-  const themeBtn = document.getElementById('theme-btn');
-  const icon = themeBtn.querySelector('i');
-  
-  const setTheme = (isDark) => {
-    if (isDark) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      icon.className = 'fas fa-sun';
-      localStorage.setItem('app_theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      icon.className = 'fas fa-moon';
-      localStorage.setItem('app_theme', 'light');
-    }
-  };
-
-  // Initialize theme
-  const savedTheme = localStorage.getItem('app_theme');
-  if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    setTheme(true);
-  } else {
-    setTheme(false);
-  }
-
-  themeBtn.addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    setTheme(!isDark);
-  });
-  */
-
   // --- Search Engine Selection ---
   const dataSourceRadios = document.getElementsByName('datasource');
 
   let fetchMode = localStorage.getItem('datasource') || 'api';
 
-  // Initialize radio state
   dataSourceRadios.forEach((radio) => {
     if (radio.value === fetchMode) radio.checked = true;
     radio.addEventListener('change', (e) => {
@@ -326,7 +314,7 @@ function initApp() {
   });
 
   const nsfwBlurToggle = document.getElementById('nsfw-blur-toggle');
-  let autoBlurNsfw = localStorage.getItem('auto_blur_nsfw') !== 'false'; // default true
+  let autoBlurNsfw = localStorage.getItem('auto_blur_nsfw') !== 'false';
   if (nsfwBlurToggle) {
     nsfwBlurToggle.checked = autoBlurNsfw;
     nsfwBlurToggle.addEventListener('change', (e) => {
@@ -335,14 +323,12 @@ function initApp() {
     });
   }
 
-  // Toggle with smooth CSS transition (opacity/visibility/transform)
   settingsBtn.addEventListener('click', () => {
     const isHidden = settingsPanel.classList.contains('is-hidden');
     settingsPanel.classList.toggle('is-hidden');
     settingsBtn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
   });
 
-  // Close on outside click
   document.addEventListener('click', (e) => {
     if (!settingsBtn.contains(e.target) && !settingsPanel.contains(e.target)) {
       settingsPanel.classList.add('is-hidden');
@@ -350,7 +336,6 @@ function initApp() {
     }
   });
 
-  // Close on Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !settingsPanel.classList.contains('is-hidden')) {
       settingsPanel.classList.add('is-hidden');
@@ -376,19 +361,16 @@ function initApp() {
     }
     const proxyImgUrl = `https://img.1224630.xyz/?url=${encodeURIComponent(rawImgUrl)}`;
 
-    // 1. Visible Display Image (Direct link, no proxy, no CORS, for fast loading)
     const displayImg = document.createElement('img');
     displayImg.src = rawImgUrl;
     displayImg.alt = album.name || 'Cover';
     
     displayImg.onerror = () => {
-      // If direct link fails (e.g., E-Hentai hotlink protection), fallback to proxy for display too
       if (displayImg.src !== proxyImgUrl) {
         displayImg.src = proxyImgUrl;
       } else {
         visualContent.innerHTML = `<span><i class="fa-solid fa-image-slash"></i> ${t('comic.no_cover')}</span>`;
         visualContent.classList.add('placeholder');
-        // Reset colors to defaults
         document.documentElement.style.removeProperty('--primary-color');
         document.documentElement.style.removeProperty('--primary-btn');
         document.documentElement.style.removeProperty('--secondary-color');
@@ -399,7 +381,6 @@ function initApp() {
 
     visualContent.appendChild(displayImg);
 
-    // --- Auto-blur NSFW logic ---
     if (autoBlurNsfw) {
       let isNsfw = false;
       const tags = album.tags || [];
@@ -443,7 +424,6 @@ function initApp() {
         visualContent.appendChild(overlay);
       }
     }
-    // 2. Hidden Proxy Image (CORS enabled, used ONLY for Vibrant.js color extraction)
     if (typeof Vibrant !== 'undefined') {
       const proxyImg = new Image();
       proxyImg.crossOrigin = 'Anonymous';
@@ -452,18 +432,17 @@ function initApp() {
       proxyImg.onload = () => {
         const vibrant = new Vibrant(proxyImg, { quality: 1 });
         vibrant.getPalette().then(palette => {
-          let c1 = [160, 196, 255]; // fallback
+          let c1 = [160, 196, 255]; 
           let c2 = [255, 198, 255];
           let c3 = [253, 255, 182];
 
           c1 = palette.Vibrant ? palette.Vibrant.rgb : c1;
-          let btnColor = [...c1]; // Save un-pastelified color for high-contrast buttons
+          let btnColor = [...c1];
 
           if (palette.LightVibrant) c2 = palette.LightVibrant.rgb;
           if (palette.Muted) c3 = palette.Muted.rgb;
           else if (palette.DarkVibrant) c3 = palette.DarkVibrant.rgb;
 
-          // Helper to ensure colors are soft and macaron-like (mix with warm white)
           const pastelify = (rgb) => [
             Math.round(rgb[0] * 0.6 + 255 * 0.4),
             Math.round(rgb[1] * 0.6 + 250 * 0.4),
@@ -479,7 +458,6 @@ function initApp() {
           document.documentElement.style.setProperty('--secondary-color', `rgb(${c2.join(',')})`);
           document.documentElement.style.setProperty('--accent-color', `rgb(${c3.join(',')})`);
 
-          // WebGL background uses internal lerp for smooth shader color transition
           if (webglBg) {
             webglBg.setColors(c1, c2, c3);
           }
@@ -490,7 +468,6 @@ function initApp() {
     }
   };
 
-  // ============================================
   // ============================================
   //  Search Logic
   // ============================================
@@ -532,8 +509,9 @@ function initApp() {
         smoothStateSwitch(resultContainer.querySelector('.result-stack'), [loadingIndicator, errorMsg], comicInfo, 'flex');
         populateComicInfo('jm', album, `https://18comic.vip/album/${query}`, query);
         updateVisual(album);
-        triggerTransfer(album.name || '', currentPlatform);
 
+        // Trigger transfer panel search
+        triggerTransfer(album, currentPlatform);
       } else if (currentPlatform === 'eh') {
         const results = await searchEhentai(query);
         if (searchId !== currentSearchId) return; // Discard if overridden
@@ -564,7 +542,7 @@ function initApp() {
           tags,
         });
 
-        triggerTransfer(baseAlbum.title || query, currentPlatform);
+        triggerTransfer(album, currentPlatform);
       }
     } catch (err) {
       if (searchId !== currentSearchId) return; // Discard if overridden
@@ -636,8 +614,7 @@ function initApp() {
     return finalCandidates.length > 0 ? finalCandidates : [title];
   }
 
-  async function triggerTransfer(rawTitle, sourcePlatform) {
-    const candidates = extractSearchCandidates(rawTitle);
+  async function triggerTransfer(album, sourcePlatform) {
     transferTargets = getTransferTargets(sourcePlatform);
     transferCache = {};
     activeTransferTab = null;
@@ -647,25 +624,51 @@ function initApp() {
       return;
     }
 
-    // Initialize search input with the first candidate
-    transferKeywordInput.value = candidates[0] || rawTitle;
+    let candidatesMap = {};
+    let fallbackTitle = '';
+
+    if (sourcePlatform === 'eh') {
+      // For EHentai, title_jpn is usually Japanese/Chinese, title is Romaji/English
+      const jmCandidates = extractSearchCandidates(album.title_jpn || album.title);
+      const nhentaiCandidates = extractSearchCandidates(album.title || album.title_jpn);
+      candidatesMap = {
+        'jm': jmCandidates,
+        'nhentai': nhentaiCandidates,
+        'picacg': jmCandidates
+      };
+      fallbackTitle = album.title_jpn || album.title || '';
+    } else {
+      // For JMComic
+      const defaultCandidates = extractSearchCandidates(album.name || '');
+      candidatesMap = {
+        'eh': defaultCandidates,
+        'nhentai': defaultCandidates,
+        'picacg': defaultCandidates
+      };
+      fallbackTitle = album.name || '';
+    }
+
+    // Initialize search input with the first candidate of the first target
+    const firstTargetCandidates = candidatesMap[transferTargets[0].id] || [];
+    transferKeywordInput.value = firstTargetCandidates[0] || fallbackTitle;
 
     // Build tabs
     transferTabs.innerHTML = '';
     transferTargets.forEach((target, idx) => {
       const btn = document.createElement('button');
+      const targetCandidates = candidatesMap[target.id] || [];
       btn.className = 'transfer-tab' + (idx === 0 ? ' active' : '');
       btn.setAttribute('role', 'tab');
       btn.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
       btn.innerHTML = `<i class="${target.icon}"></i> <span data-i18n="${target.labelKey}">${t(target.labelKey)}</span>`;
-      btn.addEventListener('click', () => switchTransferTab(target.id, candidates));
+      btn.addEventListener('click', () => switchTransferTab(target.id, targetCandidates));
       transferTabs.appendChild(btn);
     });
 
     // Function to show the panel and select first tab
     const revealTransferPanel = () => {
       transferArea.style.display = 'flex';
-      switchTransferTab(transferTargets[0].id, candidates);
+      switchTransferTab(transferTargets[0].id, firstTargetCandidates);
     };
 
     // Use View Transitions API if supported for a buttery smooth layout reflow
