@@ -5,6 +5,7 @@ import { initI18n, t, getCurrentLang, setI18nText, setI18nPlaceholder, setI18nTi
 import { translateTag, checkAndUpdateTags } from './tag-translator.js';
 import { initLogoInteractivity, setLogoCentered } from './logo.js';
 import { showToast } from './toast.js';
+import { bindStorage, transitionManager, setupClickOutside } from './utils.js';
 import no18Icon from '../image/no18.png';
 
 let settingsPanelWasOpen = false;
@@ -77,13 +78,9 @@ function initApp() {
   let currentPlatformState = null;
 
   // === Search Memory Restore ===
-  const lastPlatform = localStorage.getItem('last_platform') || 'jm';
-  const lastKeyword = localStorage.getItem('last_keyword') || '';
-  input.value = lastKeyword;
+  const lastPlatform = bindStorage('last_platform', document.querySelectorAll('input[name="platform"]'), 'jm');
+  const lastKeyword = bindStorage('last_keyword', [input], '');
   
-  document.querySelectorAll('input[name="platform"]').forEach(radio => {
-    radio.checked = (radio.value === lastPlatform);
-  });
   if (lastPlatform === 'eh') {
     setI18nPlaceholder(input, 'search.input_eh');
   } else {
@@ -194,105 +191,7 @@ function initApp() {
   //  Fade Transition Helpers
   // ============================================
 
-  /**
-   * Smoothly show an element with fade + slide-up.
-   * @param {HTMLElement} el  - The element to show
-   * @param {string} display  - CSS display value (default 'block')
-   */
-  function fadeIn(el, display = 'block') {
-    // Cancel any pending hide timeout
-    if (el._fadeTimer) {
-      clearTimeout(el._fadeTimer);
-      el._fadeTimer = null;
-    }
-    el.style.display = display;
-    // Force reflow so browser registers the display change
-    void el.offsetHeight;
-    el.classList.add('fade-in');
-  }
-
-  /**
-   * Smoothly hide an element with fade + slide-down,
-   * then set display:none after the transition completes.
-   * @param {HTMLElement} el - The element to hide
-   */
-  function fadeOut(el) {
-    if (el.style.display === 'none') return;
-    el.classList.remove('fade-in');
-
-    const onEnd = () => {
-      el.removeEventListener('transitionend', onEnd);
-      if (!el.classList.contains('fade-in')) {
-        el.style.display = 'none';
-      }
-    };
-    el.addEventListener('transitionend', onEnd, { once: true });
-
-    el._fadeTimer = setTimeout(onEnd, 500);
-  }
-
-  /**
-   * Smoothly transitions container height while crossfading child elements.
-   * @param {HTMLElement} container - The wrapper element whose height will be morphed.
-   * @param {HTMLElement[]} outgoingElements - Elements to fade out and hide.
-   * @param {HTMLElement} incomingElement - The new element to show.
-   * @param {string} displayMode - The display type for incoming element (default 'block')
-   */
-  async function smoothStateSwitch(container, outgoingElements, incomingElement, displayMode = 'block') {
-    if (!container) return;
-    
-    const currentHeight = container.offsetHeight;
-    container.style.height = currentHeight + 'px';
-    container.style.overflow = 'hidden';
-    container.style.transition = 'height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-
-    let hasOutgoing = false;
-    outgoingElements.forEach(el => {
-      if (el && el.style.display !== 'none' && el.classList.contains('fade-in')) {
-        el.classList.remove('fade-in');
-        hasOutgoing = true;
-      }
-    });
-
-    if (hasOutgoing) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-
-    outgoingElements.forEach(el => {
-      if (el) el.style.display = 'none';
-    });
-    
-    let targetHeight = 0;
-    if (incomingElement) {
-      incomingElement.style.display = displayMode;
-      incomingElement.style.opacity = '0';
-      incomingElement.style.position = 'absolute';
-      incomingElement.style.width = '100%';
-      
-      targetHeight = incomingElement.offsetHeight;
-      
-      incomingElement.style.position = '';
-      incomingElement.style.opacity = '';
-      incomingElement.style.width = '';
-    }
-
-    container.style.height = targetHeight + 'px';
-
-    if (incomingElement) {
-      void incomingElement.offsetWidth;
-      incomingElement.classList.add('fade-in');
-    }
-
-    const cleanup = () => {
-      container.style.height = '';
-      container.style.overflow = '';
-      container.style.transition = '';
-    };
-    container.addEventListener('transitionend', (e) => {
-      if (e.propertyName === 'height') cleanup();
-    }, { once: true });
-    setTimeout(cleanup, 500);
-  }
+  const smoothStateSwitch = transitionManager.smoothStateSwitch.bind(transitionManager);
 
   // ============================================
   //  WebGL Background
@@ -319,25 +218,12 @@ function initApp() {
   
   // --- Search Engine Selection ---
   const dataSourceRadios = document.getElementsByName('datasource');
-
-  let fetchMode = localStorage.getItem('datasource') || 'api';
-
-  dataSourceRadios.forEach((radio) => {
-    if (radio.value === fetchMode) radio.checked = true;
-    radio.addEventListener('change', (e) => {
-      fetchMode = e.target.value;
-      localStorage.setItem('datasource', fetchMode);
-    });
-  });
+  let fetchMode = bindStorage('datasource', dataSourceRadios, 'api', (val) => fetchMode = val);
 
   const nsfwBlurToggle = document.getElementById('nsfw-blur-toggle');
-  let autoBlurNsfw = localStorage.getItem('auto_blur_nsfw') !== 'false';
+  let autoBlurNsfw = true;
   if (nsfwBlurToggle) {
-    nsfwBlurToggle.checked = autoBlurNsfw;
-    nsfwBlurToggle.addEventListener('change', (e) => {
-      autoBlurNsfw = e.target.checked;
-      localStorage.setItem('auto_blur_nsfw', autoBlurNsfw);
-    });
+    autoBlurNsfw = bindStorage('auto_blur_nsfw', [nsfwBlurToggle], true, (val) => autoBlurNsfw = val);
   }
 
   settingsBtn.addEventListener('click', () => {
@@ -346,19 +232,9 @@ function initApp() {
     settingsBtn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
   });
 
-  document.addEventListener('click', (e) => {
-    if (!settingsBtn.contains(e.target) && !settingsPanel.contains(e.target)) {
-      settingsPanel.classList.add('is-hidden');
-      settingsBtn.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !settingsPanel.classList.contains('is-hidden')) {
-      settingsPanel.classList.add('is-hidden');
-      settingsBtn.setAttribute('aria-expanded', 'false');
-      settingsBtn.focus();
-    }
+  setupClickOutside(settingsPanel, settingsBtn, () => {
+    settingsPanel.classList.add('is-hidden');
+    settingsBtn.setAttribute('aria-expanded', 'false');
   });
 
   // ============================================
@@ -502,10 +378,6 @@ function initApp() {
     
     const currentPlatform = document.querySelector('input[name="platform"]:checked')?.value || 'jm';
     let query = input.value.trim();
-
-    // Save Search Memory
-    localStorage.setItem('last_platform', currentPlatform);
-    localStorage.setItem('last_keyword', query);
 
       if (currentPlatform === 'jm') {
       query = query.replace(/\D/g, '');

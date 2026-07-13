@@ -1,5 +1,6 @@
 import { showToast } from './toast.js';
 import { loadTagTranslations } from './tag-translator.js';
+import { bindStorage } from './utils.js';
 import en from './i18n/en.json';
 import zh from './i18n/zh.json';
 import ja from './i18n/ja.json';
@@ -13,8 +14,21 @@ let isAuto = true;
  * Initialize internationalization
  */
 export function initI18n() {
-  const savedLang = localStorage.getItem('app_lang');
-  
+  const radios = document.querySelectorAll('input[name="language"]');
+  const savedLang = bindStorage('app_lang', radios, 'auto', (val) => {
+    const isRealChange = (val === 'auto' && !isAuto) || (val !== 'auto' && val !== currentLang);
+    
+    if (isRealChange) {
+      window.dispatchEvent(new Event('showLoading'));
+      setTimeout(() => {
+        setLanguage(val);
+        window.dispatchEvent(new Event('hideLoading'));
+      }, 600);
+    } else {
+      setLanguage(val);
+    }
+  });
+
   if (savedLang && savedLang !== 'auto') {
     isAuto = false;
     currentLang = savedLang;
@@ -22,31 +36,6 @@ export function initI18n() {
     isAuto = true;
     detectLanguage();
   }
-
-  // Update UI radio buttons
-  const radios = document.querySelectorAll('input[name="language"]');
-  radios.forEach(radio => {
-    if ((isAuto && radio.value === 'auto') || (!isAuto && radio.value === currentLang)) {
-      radio.checked = true;
-    }
-    
-    radio.addEventListener('change', (e) => {
-      const val = e.target.value;
-      
-      // Determine if a real change will happen
-      const isRealChange = (val === 'auto' && !isAuto) || (val !== 'auto' && val !== currentLang);
-      
-      if (isRealChange) {
-        window.dispatchEvent(new Event('showLoading'));
-        setTimeout(() => {
-          setLanguage(val);
-          window.dispatchEvent(new Event('hideLoading'));
-        }, 600);
-      } else {
-        setLanguage(val);
-      }
-    });
-  });
 
   applyTranslations();
   
@@ -61,12 +50,10 @@ export function initI18n() {
 export function setLanguage(lang) {
   if (lang === 'auto') {
     isAuto = true;
-    localStorage.removeItem('app_lang');
     detectLanguage();
   } else {
     isAuto = false;
     currentLang = lang;
-    localStorage.setItem('app_lang', lang);
   }
   
   applyTranslations();
