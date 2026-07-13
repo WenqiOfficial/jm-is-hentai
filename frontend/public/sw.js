@@ -34,9 +34,22 @@ self.addEventListener('fetch', (event) => {
 
 
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('/'))
-    );
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      try {
+        const networkResponse = await fetch(event.request);
+        event.waitUntil(cache.put(event.request, networkResponse.clone()));
+        return networkResponse;
+      } catch (error) {
+        const cachedResponse = await cache.match(event.request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        return caches.match('/');
+      }
+    })());
     return;
   }
 
