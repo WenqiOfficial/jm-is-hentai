@@ -1,0 +1,18 @@
+{
+  "name": "Hentai车站",
+  "short_name": "车站",
+  "description": "基于 Vite 和 Cloudflare Workers 构建的跨平台漫画代理转换平台。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#A0C4FF",
+  "icons": [
+    {
+      "src": "/pwa-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

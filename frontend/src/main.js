@@ -9,6 +9,7 @@ import { bindStorage, transitionManager, setupClickOutside } from './utils.js';
 import { initJellyTrackers } from './ui/jelly-tracker.js';
 import { initUniversalMobileInput } from './ui/mobile-input.js';
 import { initTransferPanel } from './transfer-panel.js';
+import { initPwaVersioning } from './pwa-update.js';
 import no18Icon from '../image/no18.png';
 
 let settingsPanelWasOpen = false;
@@ -531,6 +532,8 @@ function initApp() {
   if (document.body.classList.contains('mask-active')) {
     setLogoCentered(true);
   }
+
+  void initPwaVersioning();
 }
 
 if (document.readyState === 'loading') {
@@ -538,3 +541,4 @@ if (document.readyState === 'loading') {
 } else {
   initApp();
 }
+
