@@ -9,8 +9,8 @@
   "theme_color": "#A0C4FF",
   "icons": [
     {
-      "src": "/pwa-icon.png",
-      "sizes": "512x512",
+      "src": "/icon-jmeh.png",
+      "sizes": "550x550",
       "type": "image/png",
       "purpose": "any maskable"
     }
