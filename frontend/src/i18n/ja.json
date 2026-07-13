@@ -13,6 +13,7 @@
   "platform.nhentai": "nHentai",
   "search.input_jm": "JMComic IDを入力...",
   "search.input_eh": "E-Hentaiのキーワードを入力...",
+  "search.mobile_input": "何をお探しですか？~",
   "search.button": "検索",
   "search.loading": "クラウドで検索中...",
   "comic.read_jm": "JMComicで読む",
@@ -55,5 +56,7 @@
   "error.all_domains_failed": "すべての代替ドメインが失敗しました",
   "error.gallery_api": "ギャラリー API がエラーを返しました",
   "app.description": "Hentaiステーション — JMComic ID検索ツール、漫画情報を素早く検索",
-  "action.settings": "設定"
+  "action.settings": "設定",
+  "action.confirm": "完了",
+  "action.input": "何か書いてね~"
 }

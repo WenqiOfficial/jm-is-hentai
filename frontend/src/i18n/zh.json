@@ -13,6 +13,7 @@
   "platform.nhentai": "nHentai",
   "search.input_jm": "输入神秘车牌号...",
   "search.input_eh": "输入检索词...",
+  "search.mobile_input": "想要找点什么呢~",
   "search.button": "检索",
   "search.loading": "正在云端寻找...",
   "comic.read_jm": "前往 JMComic",
@@ -55,5 +56,7 @@
   "error.all_domains_failed": "所有备用域名均请求失败",
   "error.gallery_api": "画廊 API 返回错误",
   "app.description": "Hentai车站 — JMComic 编号检索工具，快速查询漫画信息",
-  "action.settings": "设置"
+  "action.settings": "设置",
+  "action.confirm": "完成",
+  "action.input": "写点什么吧~"
 }

@@ -1,3 +1,5 @@
+import { setI18nText, t } from '../i18n.js';
+
 export function initUniversalMobileInput() {
   const modal = document.getElementById('mobile-input-modal');
   if (!modal) return;
@@ -6,7 +8,7 @@ export function initUniversalMobileInput() {
   if (modal.dataset.initialized === 'true') return;
   modal.dataset.initialized = 'true';
 
-  const modalInput = document.getElementById('mobile-id-input');
+  const modalInput = document.getElementById('mobile-search-input'); // Renamed ID
   const closeBtn = document.getElementById('mobile-input-close');
   const clearBtn = document.getElementById('mobile-input-clear');
   const submitBtn = document.getElementById('mobile-input-submit');
@@ -15,19 +17,69 @@ export function initUniversalMobileInput() {
 
   let activeTargetInput = null;
 
+  // Helper to sync attributes from target to modal input
+  const syncAttributes = (source, target) => {
+    const attrsToSync = ['type', 'inputmode', 'maxlength', 'pattern', 'autocomplete'];
+    attrsToSync.forEach(attr => {
+      if (source.hasAttribute(attr)) {
+        target.setAttribute(attr, source.getAttribute(attr));
+      } else {
+        target.removeAttribute(attr);
+      }
+    });
+    
+    // Always copy placeholder, fallback if missing
+    target.placeholder = source.placeholder || "...";
+  };
+
+  // Helper to dynamically update submit button and title
+  const updateModalUI = (source) => {
+    const isSearchContext = source.type === 'search' || (source.id && source.id.includes('search')) || (source.placeholder && source.placeholder.includes(t('search.button')));
+    
+    const titleEl = modal.querySelector('.mobile-input-title');
+
+    if (isSearchContext) {
+      if (titleEl) {
+        titleEl.setAttribute('data-i18n', 'search.mobile_input');
+        titleEl.innerText = t('search.mobile_input') || 'Search';
+      }
+      submitBtn.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="search.button">${t('search.button')}</span>`;
+      setI18nText(submitBtn.querySelector('span'), 'search.button');
+    } else {
+      if (titleEl) {
+        titleEl.setAttribute('data-i18n', 'action.input');
+        titleEl.innerText = t('action.input') || 'Text Input';
+      }
+      submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> <span data-i18n="action.confirm">${t('action.confirm') || 'Confirm'}</span>`;
+      setI18nText(submitBtn.querySelector('span'), 'action.confirm');
+    }
+  };
+
+  // Helper to validate and extract input target
+  const getValidTargetInput = (e) => {
+    let target = e.target;
+    if (!target) return null;
+    
+    if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+      target = target.closest('input, textarea');
+    }
+    
+    if (!target) return null;
+    if (target.id === 'mobile-search-input') return null; // Ignore our own modal input
+    
+    if (target.tagName === 'INPUT') {
+      const validTypes = ['text', 'search', 'number', 'email', 'password', 'tel', 'url'];
+      if (!validTypes.includes(target.type)) return null;
+    }
+    
+    return target;
+  };
+
   const handleInteraction = (e) => {
     if (!isMobile()) return;
     
-    // Check if the interaction is on an input or label pointing to an input
-    // The closest label might have an input inside it, but for our case, search boxes are direct inputs
-    let target = e.target;
-
-    if (target.tagName !== 'INPUT') {
-      // Allow label clicks to focus inputs, but we're mostly concerned with direct input taps here
-      target = target.closest('input');
-    }
-
-    if (target && target.tagName === 'INPUT' && (target.type === 'text' || target.type === 'search') && target.id !== 'mobile-id-input') {
+    const target = getValidTargetInput(e);
+    if (target) {
       e.preventDefault();
       target.blur(); // Ensure original input doesn't keep focus
       
@@ -36,12 +88,8 @@ export function initUniversalMobileInput() {
       modal.classList.remove('is-hidden');
       modalInput.value = target.value;
       
-      if (target.placeholder) {
-        modalInput.placeholder = target.placeholder;
-      } else {
-        modalInput.placeholder = "...";
-      }
-      
+      syncAttributes(target, modalInput);
+      updateModalUI(target);
       updateClearBtn();
       
       // Slight delay to allow CSS transition before focusing, ensures keyboard pops up smoothly
@@ -56,10 +104,8 @@ export function initUniversalMobileInput() {
   document.addEventListener('touchstart', handleInteraction, { passive: false });
   document.addEventListener('mousedown', (e) => {
     if (isMobile()) {
-      let target = e.target;
-      if (target.tagName !== 'INPUT') target = target.closest('input');
-      
-      if (target && target.tagName === 'INPUT' && (target.type === 'text' || target.type === 'search') && target.id !== 'mobile-id-input') {
+      const target = getValidTargetInput(e);
+      if (target) {
         e.preventDefault();
         handleInteraction(e);
       }
@@ -76,42 +122,47 @@ export function initUniversalMobileInput() {
     activeTargetInput = null;
   };
 
-  // Click outside to close (clicking the backdrop)
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      if (activeTargetInput) {
-        activeTargetInput.value = modalInput.value.trim();
-        activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      closeModal();
-    }
-  });
-
-  closeBtn.addEventListener('click', () => {
+  const syncValueAndClose = () => {
     if (activeTargetInput) {
-      activeTargetInput.value = modalInput.value.trim();
+      activeTargetInput.value = modalInput.value;
       activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
     closeModal();
+  };
+
+  // Click outside to close (clicking the backdrop)
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      syncValueAndClose();
+    }
   });
+
+  closeBtn.addEventListener('click', syncValueAndClose);
   
   clearBtn.addEventListener('click', () => {
     modalInput.value = '';
     updateClearBtn();
     modalInput.focus();
+    
+    // Real-time sync even on clear
+    if (activeTargetInput) {
+      activeTargetInput.value = '';
+      activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   });
 
-  modalInput.addEventListener('input', updateClearBtn);
+  // Real-time synchronization
+  modalInput.addEventListener('input', () => {
+    updateClearBtn();
+    if (activeTargetInput) {
+      activeTargetInput.value = modalInput.value;
+      activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
 
   const submitAction = () => {
     if (activeTargetInput) {
-      const val = modalInput.value.trim();
-      activeTargetInput.value = val;
-      
-      // Dispatch input event to notify any listeners
-      activeTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
-      
-      // Simulate "Enter" keypress on the target input to trigger its native search handler
+      // Value is already synced in real-time, just simulate Enter keypress
       const enterEvent = new KeyboardEvent('keypress', {
         key: 'Enter',
         code: 'Enter',
@@ -121,7 +172,7 @@ export function initUniversalMobileInput() {
       });
       activeTargetInput.dispatchEvent(enterEvent);
     }
-    closeModal();
+    syncValueAndClose(); // close modal
   };
 
   modalInput.addEventListener('keypress', (e) => {

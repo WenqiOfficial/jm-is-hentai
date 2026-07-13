@@ -13,6 +13,7 @@
   "platform.nhentai": "nHentai",
   "search.input_jm": "Enter JMComic ID...",
   "search.input_eh": "Enter E-Hentai query...",
+  "search.mobile_input": "What are you looking for? ~",
   "search.button": "Search",
   "search.loading": "Searching in the cloud...",
   "comic.read_jm": "Read on JMComic",
@@ -55,5 +56,7 @@
   "error.all_domains_failed": "All fallback domains failed",
   "error.gallery_api": "Gallery API returned error",
   "app.description": "Hentai Station - JMComic ID Search Tool, quick comic info lookup",
-  "action.settings": "Settings"
+  "action.settings": "Settings",
+  "action.confirm": "Done",
+  "action.input": "Write something... ~"
 }
