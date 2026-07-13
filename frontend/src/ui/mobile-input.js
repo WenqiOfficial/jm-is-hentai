@@ -8,7 +8,7 @@ export function initUniversalMobileInput() {
   if (modal.dataset.initialized === 'true') return;
   modal.dataset.initialized = 'true';
 
-  const modalInput = document.getElementById('mobile-search-input'); // Renamed ID
+  const modalInput = document.getElementById('mobile-search-input');
   const closeBtn = document.getElementById('mobile-input-close');
   const clearBtn = document.getElementById('mobile-input-clear');
   const submitBtn = document.getElementById('mobile-input-submit');
@@ -34,7 +34,12 @@ export function initUniversalMobileInput() {
 
   // Helper to dynamically update submit button and title
   const updateModalUI = (source) => {
-    const isSearchContext = source.type === 'search' || (source.id && source.id.includes('search')) || (source.placeholder && source.placeholder.includes(t('search.button')));
+    // Rely on structural attributes instead of translated strings
+    const isSearchContext = source.type === 'search' || 
+                            (source.id && source.id.toLowerCase().includes('search')) || 
+                            (source.className && typeof source.className === 'string' && source.className.toLowerCase().includes('search')) ||
+                            source.id === 'jm-id-input' || 
+                            source.id === 'transfer-keyword-input';
     
     const titleEl = modal.querySelector('.mobile-input-title');
 
@@ -75,8 +80,19 @@ export function initUniversalMobileInput() {
     return target;
   };
 
+  let isScrolling = false;
+  
+  document.addEventListener('touchstart', () => {
+    isScrolling = false;
+  }, { passive: true });
+  
+  document.addEventListener('touchmove', () => {
+    isScrolling = true;
+  }, { passive: true });
+
   const handleInteraction = (e) => {
     if (!isMobile()) return;
+    if (e.type === 'touchend' && isScrolling) return; // Prevent trigger on scroll
     
     const target = getValidTargetInput(e);
     if (target) {
@@ -100,14 +116,16 @@ export function initUniversalMobileInput() {
     }
   };
 
-  // Global event delegation
-  document.addEventListener('touchstart', handleInteraction, { passive: false });
-  document.addEventListener('mousedown', (e) => {
+  // Smart tap detection
+  document.addEventListener('touchend', handleInteraction, { passive: false });
+  document.addEventListener('click', (e) => {
     if (isMobile()) {
       const target = getValidTargetInput(e);
       if (target) {
         e.preventDefault();
-        handleInteraction(e);
+        if (!activeTargetInput) {
+          handleInteraction(e);
+        }
       }
     }
   });
