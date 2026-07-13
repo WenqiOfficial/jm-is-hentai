@@ -1287,3 +1287,94 @@ body.mask-active .menu-toggle {
   }
 }
 
+/* ============================================
+   Mobile Secondary Input Modal
+   ============================================ */
+.mobile-input-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  background: rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(24px) brightness(0.9);
+  backdrop-filter: blur(24px) brightness(0.9);
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+[data-theme="dark"] .mobile-input-modal {
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(24px) brightness(0.6);
+  backdrop-filter: blur(24px) brightness(0.6);
+}
+
+.mobile-input-modal.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mobile-input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.mobile-input-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.mobile-input-body {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mobile-input-wrapper .rounded-input {
+  width: 100%;
+  padding-right: 48px; /* space for clear btn */
+}
+
+.clear-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  color: var(--text-light);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.mobile-submit-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
+  border-radius: 20px;
+}
+
+

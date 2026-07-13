@@ -228,6 +228,22 @@
     </div>
   </main>
 
+  <!-- Mobile Secondary Input Modal -->
+  <div id="mobile-input-modal" class="mobile-input-modal is-hidden" role="dialog" aria-modal="true" aria-label="文本输入">
+    <div class="mobile-input-header">
+      <button id="mobile-input-close" class="icon-btn" aria-label="关闭输入框"><i class="fa-solid fa-chevron-left"></i></button>
+      <span class="mobile-input-title" data-i18n="search.mobile_input">输入检索词</span>
+      <div style="width: 44px;"></div> <!-- Spacer for centering -->
+    </div>
+    <div class="mobile-input-body">
+      <div class="mobile-input-wrapper">
+        <input type="text" id="mobile-id-input" class="rounded-input" placeholder="..." autocomplete="off" />
+        <button id="mobile-input-clear" class="icon-btn small-btn clear-btn" aria-label="清空输入框" style="display: none;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <button id="mobile-input-submit" class="jelly-btn mobile-submit-btn"><i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="search.button">检索</span></button>
+    </div>
+  </div>
+
   <!-- Rolling Footer -->
   <footer class="footer" role="contentinfo" id="app-footer">
     <p id="footer-text-container"></p>

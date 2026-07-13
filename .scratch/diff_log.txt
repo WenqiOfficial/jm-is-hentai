@@ -1,0 +1,5 @@
+a163a0f fix: initialize jelly tracker after restoring memory to sync visual state
+bf71a78 refactor: collapse shallow transfer wrappers and extract ehentai domain module
+5bf789e refactor: extract transfer panel and jelly tracker from main.js
+806fdde agent
+4eb0e10 refactor: extract E-Hentai and JMComic adapters from worker

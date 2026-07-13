@@ -7,6 +7,7 @@ import { initLogoInteractivity, setLogoCentered } from './logo.js';
 import { showToast } from './toast.js';
 import { bindStorage, transitionManager, setupClickOutside } from './utils.js';
 import { initJellyTrackers } from './ui/jelly-tracker.js';
+import { initUniversalMobileInput } from './ui/mobile-input.js';
 import { initTransferPanel } from './transfer-panel.js';
 import no18Icon from '../image/no18.png';
 
@@ -71,6 +72,7 @@ function initApp() {
   const comicInfo = document.getElementById('comic-info');
 
   // Initialize new modules
+  initUniversalMobileInput();
   const { triggerTransfer } = initTransferPanel();
 
   // Add specific listener for input placeholder side-effect
