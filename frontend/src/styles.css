@@ -987,6 +987,10 @@ body.mask-active .menu-toggle {
   margin-top: 4px;
 }
 
+.actions a {
+  text-decoration: none;
+}
+
 /* ===== Transfer Panel (换乘) ===== */
 
 /* Mobile: stack below operation area */
