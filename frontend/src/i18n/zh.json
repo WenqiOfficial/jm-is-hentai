@@ -58,5 +58,9 @@
   "app.description": "Hentai车站 — JMComic 编号检索工具，快速查询漫画信息",
   "action.settings": "设置",
   "action.confirm": "完成",
-  "action.input": "写点什么吧~"
+  "action.input": "写点什么吧~",
+  "pwa.deploying": "正在部署离线优化...",
+  "pwa.deploy_success": "离线优化部署成功！",
+  "pwa.syncing": "正在同步最新离线优化...",
+  "pwa.deploy_fail": "离线优化部署失败..."
 }

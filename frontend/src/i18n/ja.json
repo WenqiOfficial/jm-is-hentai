@@ -58,5 +58,9 @@
   "app.description": "Hentaiステーション — JMComic ID検索ツール、漫画情報を素早く検索",
   "action.settings": "設定",
   "action.confirm": "完了",
-  "action.input": "何か書いてね~"
+  "action.input": "何か書いてね~",
+  "pwa.deploying": "オフライン最適化をデプロイ中...",
+  "pwa.deploy_success": "オフライン最適化のデプロイに成功！",
+  "pwa.syncing": "最新のオフライン最適化を同期中...",
+  "pwa.deploy_fail": "オフライン最適化のデプロイに失敗..."
 }

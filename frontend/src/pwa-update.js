@@ -1,4 +1,5 @@
 import { showToast } from './toast.js';
+import { t } from './i18n.js';
 
 const REPO_OWNER = 'WenqiOfficial';
 const REPO_NAME = 'jm-is-hentai';
@@ -58,15 +59,20 @@ export async function initPwaVersioning() {
     }
   });
 
+  // Show initial registration / syncing toast
+  if (updateAvailable) {
+    showToast(t('pwa.syncing'), 'info', 4000);
+  } else if (!previousVersion) {
+    showToast(t('pwa.deploying'), 'info', 4000);
+  }
+
   try {
     const registration = await navigator.serviceWorker.register(buildServiceWorkerUrl(nextVersion), {
       scope: '/',
     });
 
     if (updateAvailable) {
-      const versionLabel = latestCommit.shortSha || nextVersion.slice(0, 8);
-      const message = latestCommit.message ? `：${latestCommit.message}` : '';
-      showToast(`检测到更新，PWA 将更新到 ${versionLabel}${message}`, 'info', 5000);
+      showToast(t('pwa.deploy_success'), 'success', 4000);
       shouldReload = true;
 
       if (registration.waiting) {
@@ -76,9 +82,12 @@ export async function initPwaVersioning() {
       registration.update().catch(() => {
         // Ignore update failures; the current app still works.
       });
+    } else if (!previousVersion) {
+      showToast(t('pwa.deploy_success'), 'success', 4000);
     }
   } catch (error) {
     console.warn('PWA registration failed:', error);
+    showToast(t('pwa.deploy_fail'), 'error', 5000);
   } finally {
     if (latestCommit?.sha) {
       localStorage.setItem(STORAGE_KEY, latestCommit.sha);

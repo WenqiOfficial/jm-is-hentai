@@ -58,5 +58,9 @@
   "app.description": "Hentai Station - JMComic ID Search Tool, quick comic info lookup",
   "action.settings": "Settings",
   "action.confirm": "Done",
-  "action.input": "Write something... ~"
+  "action.input": "Write something... ~",
+  "pwa.deploying": "Deploying offline optimization...",
+  "pwa.deploy_success": "Offline optimization deployed!",
+  "pwa.syncing": "Syncing latest offline optimization...",
+  "pwa.deploy_fail": "Offline optimization deployment failed..."
 }
